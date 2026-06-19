@@ -11,7 +11,7 @@ Everything runs in the browser. No server, no uploads — your data stays on you
 
 Open the live app in any browser:
 
-**https://bradley-parker.github.io/SAR-Evac-Tools/**
+**https://bradley-parker.github.io/SAR-Evac-Tools/sar-evac-bridge.html**
 
 Share that link with your team — no download required.
 
