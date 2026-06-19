@@ -1,0 +1,6 @@
+address,latitude,longitude,status,marker_symbol,feature_id
+123 Main,40.34654412,-87.17651367,evac-assistance,evac-assistance,c778275c-f68b-46ce-aaf7-5de69e8fc205
+133 Main,40.34654412,-86.99523926,evac-evacuating,evac-evacuating,6bf872e2-58f3-469a-af07-2de49f7ae359
+124 Main,40.33607687,-86.8359375,point,point,f954951d-330c-42c5-a46a-387fcc3804a8
+99 Elm,40.37126655,-87.08518982,icon-R4CFVU3D-24-0.5-0.5-ff,icon-R4CFVU3D-24-0.5-0.5-ff,6bde8cca-e449-4fc5-9a25-064a0c667cfb
+299 Elm,40.41101269,-87.04193115,icon-L59G40VL-24-0.5-0.5-ff,icon-L59G40VL-24-0.5-0.5-ff,b5661756-69f0-4aa0-a0d2-d11d3b04302d
