@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAR Evac — CalTopo Bridge</title>
+  <style>
+    :root {
+      --bg: #f4f1eb;
+      --card: #fff;
+      --border: #c8bfb0;
+      --accent: #8b3a2a;
+      --text: #1a1a1a;
+      --muted: #5c5348;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.25rem;
+      line-height: 1.5;
+      max-width: 52rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 { font-size: 1.5rem; margin: 0 0 0.25rem; color: var(--accent); }
+    .subtitle { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+    label { display: block; font-size: 0.9rem; margin-bottom: 0.35rem; color: var(--muted); }
+    input[type="text"], textarea, select {
+      width: 100%;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.85rem;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+    textarea { min-height: 8rem; resize: vertical; }
+    .row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 8rem; }
+    button {
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 0.5rem 1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .hint { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0; }
+    .message {
+      padding: 0.6rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-top: 0.75rem;
+    }
+    .message.ok { background: #e8f0e4; border: 1px solid #9ab88a; }
+    .message.err { background: #fce8e6; border: 1px solid #c98a82; }
+    pre.preview {
+      font-size: 0.75rem;
+      max-height: 10rem;
+      overflow: auto;
+      background: #f8f6f2;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+    input[type="file"] { margin-bottom: 0.75rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <h1>SAR Evac — CalTopo Bridge</h1>
+  <p class="subtitle">CSV residences → GPX for CalTopo import · CalTopo GeoJSON → status CSV for records</p>
+
+  <!-- Step 1: CSV to GPX -->
+  <section id="step1">
+    <h2>Step 1 — Residences CSV → GPX</h2>
+    <p class="hint">Upload or paste a CSV. Map your column headers to latitude, longitude, and address (used as the waypoint name in CalTopo).</p>
+
+    <input type="file" id="csvFile" accept=".csv,text/csv">
+    <textarea id="csvInput" placeholder="Or paste CSV here. First row should be column headers."></textarea>
+
+    <p class="hint">After loading CSV, pick which columns hold each field (headers detected from first row):</p>
+    <div class="row" id="csvFieldPickers">
+      <div>
+        <label for="colLat">Latitude column</label>
+        <select id="colLat"><option value="">— load CSV first —</option></select>
+      </div>
+      <div>
+        <label for="colLon">Longitude column</label>
+        <select id="colLon"><option value="">— load CSV first —</option></select>
+      </div>
+      <div>
+        <label for="colAddress">Street address column</label>
+        <select id="colAddress"><option value="">— load CSV first —</option></select>
+      </div>
+    </div>
+
+    <button type="button" id="btnCsvToGpx">Build GPX</button>
+    <button type="button" class="secondary" id="btnDownloadGpx" disabled>Download GPX</button>
+    <div id="msgStep1"></div>
+    <pre class="preview" id="gpxPreview" hidden></pre>
+  </section>
+
+  <!-- Step 2: GeoJSON to CSV -->
+  <section id="step2">
+    <h2>Step 2 — CalTopo GeoJSON → Status CSV</h2>
+    <p class="hint">Export your map layer from CalTopo as GeoJSON. Each marker becomes one row. Status comes from <code>marker-symbol</code> unless you map icons below.</p>
+
+    <input type="file" id="geoFile" accept=".json,.geojson,application/json">
+    <textarea id="geoInput" placeholder="Or paste GeoJSON here (FeatureCollection with Point markers)."></textarea>
+
+    <label for="iconMap">Icon → status mapping (optional, one per line: <code>marker-symbol=Human label</code>)</label>
+    <textarea id="iconMap" rows="6" placeholder="Leave blank to use marker-symbol as status.
+
+evac-assistance=Needs assistance
+evac-evacuating=Evacuating
+point=Unchecked
+icon-R4CFVU3D-24-0.5-0.5-ff=Cleared"></textarea>
+
+    <button type="button" id="btnGeoToCsv">Build CSV</button>
+    <button type="button" class="secondary" id="btnDownloadCsv" disabled>Download CSV</button>
+    <div id="msgStep2"></div>
+    <pre class="preview" id="csvPreview" hidden></pre>
+  </section>
+
+  <script>
+    // --- Small helpers (plain and readable) ---
+
+    function showMessage(elementId, text, isError) {
+      var el = document.getElementById(elementId);
+      el.textContent = text;
+      el.className = "message " + (isError ? "err" : "ok");
+    }
+
+    function downloadText(filename, content, mimeType) {
+      var blob = new Blob([content], { type: mimeType });
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function escapeXml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function escapeCsvCell(value) {
+      var text = value == null ? "" : String(value);
+      if (text.indexOf('"') >= 0 || text.indexOf(",") >= 0 || text.indexOf("\n") >= 0) {
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      return text;
+    }
+
+    // Parse CSV text into { headers: [], rows: [[]] }
+    function parseCsv(text) {
+      var lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+      var rows = [];
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (line.trim() === "") {
+          continue;
+        }
+        rows.push(parseCsvLine(line));
+      }
+      if (rows.length === 0) {
+        return { headers: [], rows: [] };
+      }
+      return { headers: rows[0], rows: rows.slice(1) };
+    }
+
+    function parseCsvLine(line) {
+      var cells = [];
+      var current = "";
+      var inQuotes = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = false;
+            }
+          } else {
+            current += ch;
+          }
+        } else if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ",") {
+          cells.push(current.trim());
+          current = "";
+        } else {
+          current += ch;
+        }
+      }
+      cells.push(current.trim());
+      return cells;
+    }
+
+    function guessColumn(headers, candidates) {
+      var lowerHeaders = headers.map(function (h) { return h.toLowerCase(); });
+      for (var c = 0; c < candidates.length; c++) {
+        var idx = lowerHeaders.indexOf(candidates[c].toLowerCase());
+        if (idx >= 0) {
+          return headers[idx];
+        }
+      }
+      return "";
+    }
+
+    function fillSelect(selectId, headers, selectedValue) {
+      var select = document.getElementById(selectId);
+      select.innerHTML = "";
+      var empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "(none)";
+      select.appendChild(empty);
+      for (var i = 0; i < headers.length; i++) {
+        var opt = document.createElement("option");
+        opt.value = headers[i];
+        opt.textContent = headers[i];
+        if (headers[i] === selectedValue) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      }
+    }
+
+    // --- Step 1: CSV → GPX ---
+
+    var lastGpx = "";
+
+    function loadCsvIntoUi(text) {
+      var parsed = parseCsv(text);
+      if (parsed.headers.length === 0) {
+        showMessage("msgStep1", "No headers found in CSV.", true);
+        return;
+      }
+      var latGuess = guessColumn(parsed.headers, ["lat", "latitude", "y"]);
+      var lonGuess = guessColumn(parsed.headers, ["lon", "lng", "long", "longitude", "x"]);
+      var addrGuess = guessColumn(parsed.headers, [
+        "address", "street", "street_address", "street address",
+        "location", "name", "title", "site"
+      ]);
+      fillSelect("colLat", parsed.headers, latGuess);
+      fillSelect("colLon", parsed.headers, lonGuess);
+      fillSelect("colAddress", parsed.headers, addrGuess);
+      showMessage("msgStep1", "Loaded " + parsed.rows.length + " data row(s). Check column mapping, then Build GPX.", false);
+    }
+
+    function buildGpxFromCsv() {
+      var text = document.getElementById("csvInput").value;
+      if (!text.trim()) {
+        showMessage("msgStep1", "Paste or upload a CSV first.", true);
+        return;
+      }
+      var parsed = parseCsv(text);
+      var colLat = document.getElementById("colLat").value;
+      var colLon = document.getElementById("colLon").value;
+      var colAddress = document.getElementById("colAddress").value;
+
+      if (!colLat || !colLon) {
+        showMessage("msgStep1", "Select both latitude and longitude columns.", true);
+        return;
+      }
+
+      var latIndex = parsed.headers.indexOf(colLat);
+      var lonIndex = parsed.headers.indexOf(colLon);
+      var addrIndex = colAddress ? parsed.headers.indexOf(colAddress) : -1;
+
+      var waypoints = [];
+      var skipped = 0;
+
+      for (var r = 0; r < parsed.rows.length; r++) {
+        var row = parsed.rows[r];
+        var lat = parseFloat(row[latIndex]);
+        var lon = parseFloat(row[lonIndex]);
+        if (isNaN(lat) || isNaN(lon)) {
+          skipped++;
+          continue;
+        }
+        var name = addrIndex >= 0 ? (row[addrIndex] || "") : ("Structure " + (r + 1));
+        waypoints.push({ lat: lat, lon: lon, name: name });
+      }
+
+      var gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      gpx += '<gpx version="1.1" creator="SAR Evac Bridge" xmlns="http://www.topografix.com/GPX/1/1">\n';
+      for (var w = 0; w < waypoints.length; w++) {
+        var pt = waypoints[w];
+        gpx += '  <wpt lat="' + pt.lat + '" lon="' + pt.lon + '">\n';
+        gpx += "    <name>" + escapeXml(pt.name) + "</name>\n";
+        gpx += "  </wpt>\n";
+      }
+      gpx += "</gpx>\n";
+
+      lastGpx = gpx;
+      document.getElementById("gpxPreview").hidden = false;
+      document.getElementById("gpxPreview").textContent = gpx.slice(0, 2000) + (gpx.length > 2000 ? "\n…" : "");
+      document.getElementById("btnDownloadGpx").disabled = false;
+
+      var msg = "GPX ready: " + waypoints.length + " waypoint(s).";
+      if (skipped > 0) {
+        msg += " Skipped " + skipped + " row(s) with missing coordinates.";
+      }
+      showMessage("msgStep1", msg, false);
+    }
+
+    document.getElementById("csvFile").addEventListener("change", function (event) {
+      var file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById("csvInput").value = reader.result;
+        loadCsvIntoUi(reader.result);
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("csvInput").addEventListener("blur", function () {
+      if (document.getElementById("csvInput").value.trim()) {
+        loadCsvIntoUi(document.getElementById("csvInput").value);
+      }
+    });
+
+    document.getElementById("btnCsvToGpx").addEventListener("click", buildGpxFromCsv);
+    document.getElementById("btnDownloadGpx").addEventListener("click", function () {
+      if (lastGpx) {
+        downloadText("residences.gpx", lastGpx, "application/gpx+xml");
+      }
+    });
+
+    // --- Step 2: GeoJSON → CSV ---
+
+    var lastStatusCsv = "";
+
+    function parseIconMap(text) {
+      var map = {};
+      var lines = text.split("\n");
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line === "" || line.indexOf("=") < 0) {
+          continue;
+        }
+        var parts = line.split("=");
+        var key = parts[0].trim();
+        var value = parts.slice(1).join("=").trim();
+        if (key) {
+          map[key] = value;
+        }
+      }
+      return map;
+    }
+
+    function statusFromSymbol(symbol, iconMap) {
+      if (!symbol) {
+        return "";
+      }
+      if (iconMap[symbol]) {
+        return iconMap[symbol];
+      }
+      return symbol;
+    }
+
+    function buildCsvFromGeoJson() {
+      var text = document.getElementById("geoInput").value;
+      if (!text.trim()) {
+        showMessage("msgStep2", "Paste or upload GeoJSON first.", true);
+        return;
+      }
+
+      var geo;
+      try {
+        geo = JSON.parse(text);
+      } catch (err) {
+        showMessage("msgStep2", "Invalid JSON: " + err.message, true);
+        return;
+      }
+
+      if (!geo.features || !Array.isArray(geo.features)) {
+        showMessage("msgStep2", "Expected a FeatureCollection with a features array.", true);
+        return;
+      }
+
+      var iconMap = parseIconMap(document.getElementById("iconMap").value);
+      var headers = ["address", "latitude", "longitude", "status", "marker_symbol", "feature_id"];
+      var rows = [];
+      var skipped = 0;
+
+      for (var f = 0; f < geo.features.length; f++) {
+        var feature = geo.features[f];
+        if (!feature.geometry || feature.geometry.type !== "Point") {
+          skipped++;
+          continue;
+        }
+        var coords = feature.geometry.coordinates;
+        if (!coords || coords.length < 2) {
+          skipped++;
+          continue;
+        }
+        var lon = coords[0];
+        var lat = coords[1];
+        var props = feature.properties || {};
+        var symbol = props["marker-symbol"] || "";
+        var address = props.title || props.name || "";
+        var status = statusFromSymbol(symbol, iconMap);
+
+        rows.push([
+          address,
+          lat,
+          lon,
+          status,
+          symbol,
+          feature.id || ""
+        ]);
+      }
+
+      var csvLines = [headers.join(",")];
+      for (var r = 0; r < rows.length; r++) {
+        var cells = rows[r].map(escapeCsvCell);
+        csvLines.push(cells.join(","));
+      }
+      lastStatusCsv = csvLines.join("\n") + "\n";
+
+      document.getElementById("csvPreview").hidden = false;
+      document.getElementById("csvPreview").textContent = lastStatusCsv.slice(0, 2000) + (lastStatusCsv.length > 2000 ? "\n…" : "");
+      document.getElementById("btnDownloadCsv").disabled = false;
+
+      var msg = "CSV ready: " + rows.length + " structure(s).";
+      if (skipped > 0) {
+        msg += " Skipped " + skipped + " non-point feature(s).";
+      }
+      showMessage("msgStep2", msg, false);
+    }
+
+    document.getElementById("geoFile").addEventListener("change", function (event) {
+      var file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById("geoInput").value = reader.result;
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("btnGeoToCsv").addEventListener("click", buildCsvFromGeoJson);
+    document.getElementById("btnDownloadCsv").addEventListener("click", function () {
+      if (lastStatusCsv) {
+        downloadText("structure-status.csv", lastStatusCsv, "text/csv");
+      }
+    });
+  </script>
+
+</body>
+</html>
