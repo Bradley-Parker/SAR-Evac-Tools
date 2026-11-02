@@ -28,10 +28,22 @@ Everything runs in that one HTML file. It works fully offline after download.
 
 All processing happens in JavaScript in your browser. Files are read locally and never sent to a server.
 
-## Development
+## Repo Layout
 
 This repository contains:
 - `sar-evac-bridge.html` — The complete, self-contained standalone application.
 - `index.html` — A lightweight redirect file routing GitHub Pages visitors directly to `sar-evac-bridge.html`.
 
 All functional updates are made directly in `sar-evac-bridge.html`.
+
+## Background, Development, and Maintenance
+
+The tool is designed to support real-world field operations during wildfire, flood, hurricane, and other emergency response events, where speed, accountability, and clear status tracking matter. It is offered publicly in hopes it may also help other responders and agencies working in similar situations.
+
+AI is used to help draft and refine the JavaScript that powers the app’s functionality, including data handling, filtering, export logic, and interface behavior. The architecture, features, and design decisions are still led by humans with operational knowledge and user experience in mind. In other words, the human problem definition and workflow design come first; AI is a development aid rather than the source of the operational concept itself.
+
+Feature requests and bug reports are welcome, but this project is maintained on a volunteer basis. There is no guarantee on response time, prioritization, or when or if a requested feature or bug fix will be addressed.
+
+This tool is offered publicly in case it is useful to others working in evacuation or wellness-check contexts. Feature requests and bug reports are welcome, but this is a volunteer-maintained project with no guarantee of response time, prioritization, or when or if issues will be addressed.
+
+All reasonable efforts are made to ensure the tool is accurate and useful, but no warranty is provided. The app is not guaranteed to be complete, error-free, or suitable for every operational situation. Users are responsible for validating outputs against local procedures, maps, and incident requirements before relying on them. Use is at your own risk.
