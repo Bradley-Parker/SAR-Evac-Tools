@@ -1,161 +1,3189 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SAR Evac — CalTopo Bridge</title>
+  <title>SAR Evacuation — CalTopo Bridge & Operations Dashboard</title>
   <style>
     :root {
       --bg: #f4f1eb;
-      --card: #fff;
-      --border: #c8bfb0;
-      --accent: #8b3a2a;
+      --card-bg: #ffffff;
+      --border: #d0c8b8;
+      --border-focus: #2e7d32;
       --text: #1a1a1a;
-      --muted: #5c5348;
+      --text-muted: #5e574d;
+      --accent: #8b3a2a;
+      --accent-hover: #702e21;
+      --primary-btn: #1b5e20;
+      --primary-btn-hover: #144718;
+      --secondary-btn-bg: #ece7de;
+      --secondary-btn-text: #2c2523;
+      --table-stripe: #fbf9f5;
+      --table-hover: #f0ebe1;
+      --banner-bg: #fff8e1;
+      --banner-border: #ffe082;
+      --banner-text: #6d4c41;
+      --dropzone-bg: #f9f7f2;
+      --dropzone-border: #b8ad9e;
+      --dropzone-hover: #e8f5e9;
     }
-    * { box-sizing: border-box; }
+
+    body.night-mode {
+      --bg: #121010;
+      --card-bg: #1e1919;
+      --border: #4a2c2c;
+      --border-focus: #ff5252;
+      --text: #f0dede;
+      --text-muted: #b08d8d;
+      --accent: #d32f2f;
+      --accent-hover: #ff5252;
+      --primary-btn: #b71c1c;
+      --primary-btn-hover: #d32f2f;
+      --secondary-btn-bg: #2d2222;
+      --secondary-btn-text: #ffcdd2;
+      --table-stripe: #241d1d;
+      --table-hover: #382525;
+      --banner-bg: #2a1810;
+      --banner-border: #6d3320;
+      --banner-text: #ffb74d;
+      --dropzone-bg: #181414;
+      --dropzone-border: #5c3838;
+      --dropzone-hover: #331d1d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
       padding: 1.25rem;
       line-height: 1.5;
-      max-width: 52rem;
+      max-width: 72rem;
       margin-left: auto;
       margin-right: auto;
+      transition: background 0.2s, color 0.2s;
     }
-    h1 { font-size: 1.5rem; margin: 0 0 0.25rem; color: var(--accent); }
-    .subtitle { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
-    section {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1.25rem;
+
+    /* Header Bar — locked against layout shifting */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
     }
-    h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
-    label { display: block; font-size: 0.9rem; margin-bottom: 0.35rem; color: var(--muted); }
-    input[type="text"], textarea, select {
-      width: 100%;
-      font-family: "Consolas", "Courier New", monospace;
+
+    .brand h1 {
+      font-size: 1.6rem;
+      margin: 0 0 0.2rem;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .brand .subtitle {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #btnToggleTheme {
+      min-width: 11.5rem;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 0;
+    }
+
+    #btnPurgeSession {
+      margin-bottom: 0;
+    }
+
+    /* Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.35rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      padding: 0.65rem 1.15rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: -2px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+      background: var(--card-bg);
+    }
+
+    .nav-tab.active {
+      background: var(--card-bg);
+      color: var(--accent);
+      border-color: var(--border);
+      border-top: 3px solid var(--accent);
+      border-bottom: 2px solid var(--card-bg);
+    }
+
+    /* Cards / Sections */
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin: 0 0 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    p.guide-hint {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    /* Persistent Backup Banner */
+    .backup-banner {
+      background: var(--banner-bg);
+      border: 1px solid var(--banner-border);
+      color: var(--banner-text);
+      border-radius: 6px;
+      padding: 0.65rem 1rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .backup-banner .banner-text {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Drag & Drop Dropzones */
+    .dropzone {
+      border: 2px dashed var(--dropzone-border);
+      background: var(--dropzone-bg);
+      border-radius: 8px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragover {
+      background: var(--dropzone-hover);
+      border-color: var(--accent);
+    }
+
+    .dropzone-icon {
+      font-size: 2rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .dropzone-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .dropzone-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    /* Form Inputs */
+    label {
+      display: block;
       font-size: 0.85rem;
-      padding: 0.5rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 0.55rem;
       border: 1px solid var(--border);
       border-radius: 4px;
       margin-bottom: 0.75rem;
+      background: var(--card-bg);
+      color: var(--text);
     }
-    textarea { min-height: 8rem; resize: vertical; }
-    .row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 8rem; }
-    button {
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+    }
+
+    textarea {
+      min-height: 5.5rem;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.82rem;
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .row>div {
+      flex: 1;
+      min-width: 9rem;
+    }
+
+    /* Buttons */
+    .btn {
       font-family: inherit;
-      font-size: 0.95rem;
-      padding: 0.5rem 1rem;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.55rem 1.15rem;
+      border-radius: 5px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid transparent;
       margin-right: 0.5rem;
       margin-bottom: 0.5rem;
+      transition: all 0.15s ease;
+      text-decoration: none;
     }
-    button:hover { filter: brightness(1.08); }
-    button.secondary {
-      background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
+
+    .btn:hover {
+      filter: brightness(1.08);
     }
-    .hint { font-size: 0.85rem; color: var(--muted); margin: 0.5rem 0; }
-    .message {
-      padding: 0.6rem 0.75rem;
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-btn);
+      color: #ffffff;
+      border-color: var(--primary-btn);
+    }
+
+    .btn-primary.recommended {
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.4);
+      animation: pulse 2.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.5);
+      }
+
+      70% {
+        box-shadow: 0 0 0 8px rgba(46, 125, 50, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+      }
+    }
+
+    .btn-secondary {
+      background: var(--secondary-btn-bg);
+      color: var(--secondary-btn-text);
+      border-color: var(--border);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      background: #c62828;
+      color: #ffffff;
+      border-color: #b71c1c;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+      margin-bottom: 0;
+    }
+
+    /* Badges & Status */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Operational Summary Dashboard Badges */
+    .dashboard-counters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .counter-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .counter-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .counter-card.active-filter {
+      background: var(--table-hover);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .counter-card .count-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+
+    .counter-card .count {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      /* Guaranteed high contrast count */
+    }
+
+    .counter-card .label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-top: 0.3rem;
+      color: var(--text-muted);
+      line-height: 1.25;
+      min-height: 2.5em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      text-align: center;
+    }
+
+    /* Semi-muted ICS Points Summary Row */
+    .ics-points-summary {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 1.15rem;
+      padding: 0.4rem 0.65rem;
+      background: var(--secondary-btn-bg);
       border-radius: 4px;
-      font-size: 0.9rem;
-      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .message.ok { background: #e8f0e4; border: 1px solid #9ab88a; }
-    .message.err { background: #fce8e6; border: 1px solid #c98a82; }
+
+    /* Filter Controls & Search Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      padding: 0.3rem 0.65rem;
+      border-radius: 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+
+    .filter-pill:hover {
+      background: var(--table-hover);
+      color: var(--text);
+    }
+
+    .filter-pill.active {
+      background: var(--accent);
+      color: #ffffff !important;
+      border-color: var(--accent);
+    }
+
+    .filter-pill.active .status-dot {
+      border-color: #ffffff !important;
+    }
+
+    .search-box {
+      min-width: 15rem;
+      margin-bottom: 0;
+    }
+
+    /* Operational Review Table */
+    .table-container {
+      max-height: 30rem;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--secondary-btn-bg);
+      color: var(--text);
+      font-weight: 600;
+      padding: 0.65rem 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tr:nth-child(even) {
+      background: var(--table-stripe);
+    }
+
+    tr:hover {
+      background: var(--table-hover);
+    }
+
+    /* Callout & Messages */
+    .message {
+      padding: 0.65rem 0.85rem;
+      border-radius: 5px;
+      font-size: 0.88rem;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .message.ok {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #1b5e20;
+    }
+
+    .message.err {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      color: #b71c1c;
+    }
+
+    .message.info {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      color: #0d47a1;
+    }
+
+    /* Collapsible Details */
+    details {
+      margin-top: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
     pre.preview {
-      font-size: 0.75rem;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.78rem;
       max-height: 10rem;
       overflow: auto;
-      background: #f8f6f2;
-      padding: 0.5rem;
+      background: var(--dropzone-bg);
+      padding: 0.6rem;
       border: 1px solid var(--border);
+      border-radius: 4px;
       margin-top: 0.5rem;
     }
-    input[type="file"] { margin-bottom: 0.75rem; font-size: 0.9rem; }
-  </style>
-</head>
-<body>
 
-  <h1>SAR Evac — CalTopo Bridge</h1>
-  <p class="subtitle">CSV residences → GPX for CalTopo import · CalTopo GeoJSON → status CSV for records</p>
-
-  <!-- Step 1: CSV to GPX -->
-  <section id="step1">
-    <h2>Step 1 — Residences CSV → GPX</h2>
-    <p class="hint">Upload or paste a CSV. Map your column headers to latitude, longitude, and address (used as the waypoint name in CalTopo).</p>
-
-    <input type="file" id="csvFile" accept=".csv,text/csv">
-    <textarea id="csvInput" placeholder="Or paste CSV here. First row should be column headers."></textarea>
-
-    <p class="hint">After loading CSV, pick which columns hold each field (headers detected from first row):</p>
-    <div class="row" id="csvFieldPickers">
-      <div>
-        <label for="colLat">Latitude column</label>
-        <select id="colLat"><option value="">— load CSV first —</option></select>
-      </div>
-      <div>
-        <label for="colLon">Longitude column</label>
-        <select id="colLon"><option value="">— load CSV first —</option></select>
-      </div>
-      <div>
-        <label for="colAddress">Street address column</label>
-        <select id="colAddress"><option value="">— load CSV first —</option></select>
-      </div>
-    </div>
-
-    <button type="button" id="btnCsvToGpx">Build GPX</button>
-    <button type="button" class="secondary" id="btnDownloadGpx" disabled>Download GPX</button>
-    <div id="msgStep1"></div>
-    <pre class="preview" id="gpxPreview" hidden></pre>
-  </section>
-
-  <!-- Step 2: GeoJSON to CSV -->
-  <section id="step2">
-    <h2>Step 2 — CalTopo GeoJSON → Status CSV</h2>
-    <p class="hint">Export your map layer from CalTopo as GeoJSON. Each marker becomes one row. Status comes from <code>marker-symbol</code> unless you map icons below.</p>
-
-    <input type="file" id="geoFile" accept=".json,.geojson,application/json">
-    <textarea id="geoInput" placeholder="Or paste GeoJSON here (FeatureCollection with Point markers)."></textarea>
-
-    <label for="iconMap">Icon → status mapping (optional, one per line: <code>marker-symbol=Human label</code>)</label>
-    <textarea id="iconMap" rows="6" placeholder="Leave blank to use marker-symbol as status.
-
-evac-assistance=Needs assistance
-evac-evacuating=Evacuating
-point=Unchecked
-icon-R4CFVU3D-24-0.5-0.5-ff=Cleared"></textarea>
-
-    <button type="button" id="btnGeoToCsv">Build CSV</button>
-    <button type="button" class="secondary" id="btnDownloadCsv" disabled>Download CSV</button>
-    <div id="msgStep2"></div>
-    <pre class="preview" id="csvPreview" hidden></pre>
-  </section>
-
-  <script>
-    // --- Small helpers (plain and readable) ---
-
-    function showMessage(elementId, text, isError) {
-      var el = document.getElementById(elementId);
-      el.textContent = text;
-      el.className = "message " + (isError ? "err" : "ok");
+    /* Preset list items */
+    .preset-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
     }
 
-    function downloadText(filename, content, mimeType) {
-      var blob = new Blob([content], { type: mimeType });
-      var link = document.createElement("a");
+    .preset-color-badge {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: inline-block;
+    }
+
+    .scheme-badge {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-weight: 600;
+      background: var(--secondary-btn-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Contextual Quick Guide Accordions */
+    .quick-guide-accordion {
+      background: var(--dropzone-bg);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary-btn);
+      border-radius: 6px;
+      margin-top: 0.85rem;
+      margin-bottom: 0.85rem;
+      padding: 0;
+      transition: all 0.2s ease;
+    }
+
+    .quick-guide-summary {
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .quick-guide-summary:hover {
+      background: var(--table-hover);
+    }
+
+    .quick-guide-content {
+      padding: 0.75rem 1rem 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    .guide-step-list {
+      margin: 0.5rem 0 0.75rem 1.25rem;
+      padding: 0;
+    }
+
+    .guide-step-list li {
+      margin-bottom: 0.45rem;
+    }
+
+    .guide-step-list li strong {
+      color: var(--accent);
+    }
+
+    /* Info (i) Icon Button */
+    .info-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.15rem;
+      height: 1.15rem;
+      border-radius: 50%;
+      background: var(--secondary-btn-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      margin-left: 0.35rem;
+      vertical-align: middle;
+      transition: all 0.15s ease;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .info-icon-btn:hover,
+    .info-icon-btn:focus {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    /* Modal Definition Dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1rem;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      max-width: 34rem;
+      width: 100%;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      line-height: 1;
+      padding: 0 0.25rem;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .modal-field {
+      margin-bottom: 0.85rem;
+      font-size: 0.88rem;
+    }
+
+    .modal-field-title {
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    /* Field Guide & Help Sections */
+    .help-toc {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .help-toc-pill {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      background: var(--secondary-btn-bg);
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .help-toc-pill:hover {
+      background: var(--table-hover);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .help-block {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.2rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .help-block h3 {
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+      font-size: 1.1rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .help-block p,
+    .help-block li {
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    .resource-card {
+      background: var(--dropzone-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .resource-card h4 {
+      margin: 0 0 0.35rem 0;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+
+    .resource-card p {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      flex-grow: 1;
+    }
+
+    .resource-card .res-link {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--primary-btn);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .resource-card .res-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Navigation & Night Mode (Locked width to prevent jitter) -->
+  <header>
+    <div class="brand">
+      <h1>SAR Evacuation — CalTopo Bridge</h1>
+      <p class="subtitle">Search & Rescue Incident Operations · Address Roster Ingest & CalTopo Triage Diff</p>
+    </div>
+    <div class="header-controls">
+      <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600;">
+        <span>Icons:</span>
+        <select id="quickSchemeSelect"
+          style="width: auto; padding: 0.3rem 0.5rem; margin-bottom: 0; font-size: 0.82rem;">
+          <option value="caltopo">CalTopo Default (8 icons)</option>
+          <option value="bcnb">BC / NB Canada (5 icons)</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btnToggleTheme" title="Toggle Red/Night vision command post theme">
+        <span id="themeIcon">🌙</span> <span id="themeLabel">Night Vision Mode</span>
+      </button>
+      <button class="btn btn-secondary btn-sm" id="btnPurgeSession" title="Clear all local incident session data">
+        🗑️ Purge Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Persistent 48h Backup Notification Banner -->
+  <div class="backup-banner" id="backupBanner">
+    <div class="banner-text">
+      <span>💾</span>
+      <span><strong>Data Safety Notice:</strong> All incident rosters stay 100% inside this browser (auto-clears after
+        48h of inactivity). Download local CSV or GeoJSON backups to your computer or USB thumb drive.</span>
+    </div>
+    <div id="sessionTimeRemaining" style="font-size: 0.82rem; font-weight: 600;"></div>
+  </div>
+
+  <!-- Stepped Tabs -->
+  <nav class="nav-tabs" role="tablist">
+    <button class="nav-tab active" data-tab="tabStep1" role="tab" id="tabBtn1">
+      <span>1️⃣</span> Step 1: Prep & Map (CSV → CalTopo)
+    </button>
+    <button class="nav-tab" data-tab="tabStep2" role="tab" id="tabBtn2">
+      <span>2️⃣</span> Step 2: Track & Reconcile (Triage Dashboard)
+    </button>
+    <button class="nav-tab" data-tab="tabPresets" role="tab" id="tabBtnPresets">
+      <span>⚙️</span> Agency Presets & Settings
+    </button>
+    <button class="nav-tab" data-tab="tabHelp" role="tab" id="tabBtnHelp">
+      <span>📖</span> Field Guide & Help
+    </button>
+  </nav>
+
+  <!-- STEP 1: PREP & MAP (CSV -> CalTopo GeoJSON / GPX) -->
+  <main>
+    <div id="tabStep1" class="tab-content active" role="tabpanel">
+      <section>
+        <h2>Step 1: Load Address Master List & Build CalTopo Map</h2>
+        <p class="guide-hint">Ingest governmetn (Local/Regional/Provicnial), parcel, or reverse-911 master CSVs.
+          Supports an optional
+          <strong>Street Name</strong> column to group waypoints into CalTopo folders by street name.
+        </p>
+
+        <!-- CSV Dropzone -->
+        <div class="dropzone" id="csvDropzone">
+          <div class="dropzone-icon">📥</div>
+          <div class="dropzone-title">Click to select master CSV or drag file here</div>
+          <div class="dropzone-sub">Accepts parcel .csv exports with latitude, longitude, address, and optional
+            street headers</div>
+          <input type="file" id="csvFileInput" accept=".csv,text/csv" class="file-input-hidden">
+        </div>
+
+        <details>
+          <summary>Or paste raw CSV text</summary>
+          <textarea id="csvTextInput"
+            placeholder="Paste CSV text here. First row must contain column headers."></textarea>
+        </details>
+
+        <div id="csvMappingContainer" style="display: none; margin-top: 1rem;">
+          <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Confirm Column Mapping</h3>
+          <div class="row">
+            <div>
+              <label for="colLat">Latitude column *</label>
+              <select id="colLat">
+                <option value="">— select column —</option>
+              </select>
+            </div>
+            <div>
+              <label for="colLon">Longitude column *</label>
+              <select id="colLon">
+                <option value="">— select column —</option>
+              </select>
+            </div>
+            <div>
+              <label for="colAddress">Full Address / Title column *</label>
+              <select id="colAddress">
+                <option value="">— select column —</option>
+              </select>
+            </div>
+            <div>
+              <label for="colStreet">Street Name column</label>
+              <select id="colStreet">
+                <option value="">— none (single folder) —</option>
+              </select>
+              <small>(Optional: groups by street)</small>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top: 0.5rem;">
+            <div>
+              <label for="caltopoFolder">Default / Master Folder Name</label>
+              <input type="text" id="caltopoFolder" value="Evacuation Roster" placeholder="e.g. Evacuation Roster">
+            </div>
+            <div style="display: flex; align-items: flex-end; padding-bottom: 0.75rem;">
+              <span style="font-size: 0.82rem; color: var(--text-muted);" id="streetGroupingHint">
+                Grouping: Single folder ("Evacuation Roster")
+              </span>
+            </div>
+          </div>
+
+          <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+            <button type="button" class="btn btn-primary recommended" id="btnBuildGeoJson">
+              🗺️ Build CalTopo Map File (GeoJSON)
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnBuildGpx">
+              📍 Build Legacy GPX
+            </button>
+            <button type="button" class="btn btn-accent" id="btnDownloadGeoJson" disabled>
+              💾 Download CalTopo GeoJSON
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnDownloadGpx" disabled>
+              💾 Download GPX
+            </button>
+          </div>
+
+          <!-- Quick Accordion: CalTopo Import Walkthrough -->
+          <details class="quick-guide-accordion" id="guideStep1Caltopo">
+            <summary class="quick-guide-summary">
+              <span>💡</span>
+              <span><strong>How do I get this file into CalTopo?</strong> (Click for step-by-step instructions)</span>
+            </summary>
+            <div class="quick-guide-content">
+              <ol class="guide-step-list">
+                <li><strong>Download your map file:</strong> Click the green <em>"Download CalTopo GeoJSON"</em> button
+                  above to save the <code>.geojson</code> file to your computer.</li>
+                <li><strong>Open your incident map:</strong> Go to <a href="https://caltopo.com/map.html"
+                    target="_blank" rel="noopener" style="color: var(--primary-btn); font-weight: 600;">caltopo.com</a>
+                  (or open your pre-created team/agency incident map).</li>
+                <li><strong>Open Import dialog:</strong> In CalTopo's left-hand sidebar, click <strong>Import</strong>
+                  (or click <em>Add</em> ➔ <em>Import</em>).</li>
+                <li><strong>Select your file:</strong> Choose the downloaded <code>.geojson</code> file. CalTopo will
+                  preview all structures and street folders.</li>
+                <li><strong>Confirm Import:</strong> Ensure all folders/markers are checked and click
+                  <strong>Import</strong>. Structures now appear as waypoints with default unvisited blue icons.
+                </li>
+                <li><strong>Deploy to Field Teams:</strong> Share the map URL or generate CalTopo mobile app
+                  bookmarks/QR codes for your field searchers.</li>
+              </ol>
+              <div style="margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-muted);">
+                💡 <em>Tip: Street grouping creates individual folders for each street in CalTopo, allowing team leaders
+                  to toggle streets on and off easily.</em>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div id="msgStep1"></div>
+
+        <details id="previewDetailsStep1" style="display: none;">
+          <summary>View Export Preview</summary>
+          <pre class="preview" id="previewStep1"></pre>
+        </details>
+      </section>
+    </div>
+
+    <!-- STEP 2: TRACK & RECONCILE (Field Updates + Two-Way Diff Table) -->
+    <div id="tabStep2" class="tab-content" role="tabpanel">
+      <!-- Cross-Scheme Alert Banner (Shows when other scheme icons are detected) -->
+      <div id="crossSchemeBanner" class="message info"
+        style="display: none; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div id="crossSchemeText">
+          ⚠️ <strong>Cross-Scheme Icons Detected:</strong> Found markers using another standard scheme.
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+          <button type="button" class="btn btn-sm btn-primary" id="btnAddCrossSchemeCards">Add to Displayed Cards &
+            Filters</button>
+          <button type="button" class="btn btn-sm btn-secondary" id="btnSwitchCrossScheme">Switch Entire Scheme</button>
+        </div>
+      </div>
+
+      <!-- Dynamic Dashboard Counters -->
+      <div class="dashboard-counters" id="dashboardCounters"></div>
+
+      <!-- Semi-muted ICS Points Summary Row (Excluded from residential evac counts) -->
+      <div class="ics-points-summary" id="icsPointsNotice" style="display: none;">
+        <div>
+          📍 <span id="icsPointsText"><strong>0 ICS / Incident Points</strong></span> (non-residence items like LZ,
+          staging, roadblocks — excluded from residential evacuation stats).
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnFilterIcs"
+          style="padding: 0.15rem 0.5rem; font-size: 0.78rem;">
+          View Incident Points in Table
+        </button>
+      </div>
+
+      <section>
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <h2 style="margin: 0;">Step 2: Ingest CalTopo Field Updates & Reconcile Roster</h2>
+          <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+            <span>Current Scheme:</span>
+            <span class="scheme-badge" id="activeSchemeBadge">CalTopo Default</span>
+          </div>
+        </div>
+        <p class="guide-hint">Export your map layer from CalTopo as GeoJSON (`Export → GeoJSON`). Marker statuses are
+          derived automatically from their CalTopo symbols. Untouched structures from the master roster are flagged as
+          unvisited.</p>
+
+        <!-- Quick Accordion: CalTopo Export Walkthrough -->
+        <details class="quick-guide-accordion" id="guideStep2Caltopo">
+          <summary class="quick-guide-summary">
+            <span>💡</span>
+            <span><strong>How do I export field updates from CalTopo?</strong> (Click for step-by-step
+              instructions)</span>
+          </summary>
+          <div class="quick-guide-content">
+            <ol class="guide-step-list">
+              <li><strong>Open your incident map:</strong> Go to your active map on <a href="https://caltopo.com"
+                  target="_blank" rel="noopener" style="color: var(--primary-btn); font-weight: 600;">caltopo.com</a>
+                where field teams have been updating marker icons.</li>
+              <li><strong>Open Export dialog:</strong> Click <strong>Export</strong> in the top menu bar (or from the
+                left-hand menu).</li>
+              <li><strong>Select format:</strong> Choose <strong>GeoJSON</strong> (GeoJSON preserves all custom marker
+                colors, symbols, and folder tags).</li>
+              <li><strong>Check evacuation layers:</strong> Ensure your evacuation folder(s) (or <em>"All
+                  Features"</em>) are checked. You can leave track logs or non-evacuation layers unchecked.</li>
+              <li><strong>Download export:</strong> Click <strong>Export</strong> at the bottom of the CalTopo dialog to
+                save the <code>.geojson</code> file.</li>
+              <li><strong>Drop file below:</strong> Drag and drop the downloaded file into the dropzone below. The
+                dashboard will instantly update real-time counts and highlight any unvisited/missing structures.</li>
+            </ol>
+          </div>
+        </details>
+
+        <!-- GeoJSON Dropzone -->
+        <div class="dropzone" id="geoDropzone">
+          <div class="dropzone-icon">🗺️</div>
+          <div class="dropzone-title">Click to select CalTopo GeoJSON or drag file here</div>
+          <div class="dropzone-sub">Drop the .geojson or .json exported from CalTopo with field marker updates</div>
+          <input type="file" id="geoFileInput" accept=".json,.geojson,application/json" class="file-input-hidden">
+        </div>
+
+        <details>
+          <summary>Or paste raw GeoJSON text</summary>
+          <textarea id="geoTextInput" placeholder="Paste FeatureCollection GeoJSON text here."></textarea>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnProcessGeoText">Process Pasted GeoJSON</button>
+        </details>
+
+        <div id="rosterStatusNotice" style="margin-top: 0.75rem; font-size: 0.88rem; color: var(--text-muted);">
+          Master Roster status: <span id="rosterCountStatus">No master CSV loaded yet (Step 1). Loaded GeoJSON markers
+            will be displayed standalone.</span>
+        </div>
+
+        <div id="msgStep2"></div>
+
+        <!-- Filter & Search Controls (Dynamic pills matching active scheme) -->
+        <div style="margin-top: 1.25rem;">
+          <div class="filter-bar">
+            <div class="filter-pills" id="filterPillsContainer"></div>
+            <div>
+              <input type="text" class="search-box" id="tableSearch" placeholder="🔍 Search address or notes...">
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="table-container">
+            <table id="triageTable">
+              <thead>
+                <tr>
+                  <th style="width: 23%;">Status</th>
+                  <th style="width: 35%;">Address / Structure Title</th>
+                  <th style="width: 18%;">Coordinates</th>
+                  <th style="width: 12%;">Symbol</th>
+                  <th style="width: 12%;">Reconciliation <button type="button" class="info-icon-btn"
+                      data-info="RECONCILIATION" title="What is Two-Way Reconciliation?"
+                      aria-label="What is Two-Way Reconciliation?">i</button></th>
+                </tr>
+              </thead>
+              <tbody id="triageTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                    Load CalTopo GeoJSON to populate triage table.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Export Buttons -->
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-primary" id="btnDownloadFilteredCsv" disabled>
+              📊 Download Filtered CSV (<span id="filteredDownloadCount">0</span> rows)
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnDownloadAllCsv" disabled>
+              📑 Download All CSV (<span id="allDownloadCount">0</span> rows)
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- PRESETS & SETTINGS (Schemes: CalTopo Default & BC/NB Canada) -->
+    <div id="tabPresets" class="tab-content" role="tabpanel">
+      <section>
+        <h2>CalTopo Evacuation Symbology Presets & Schemes</h2>
+        <p class="guide-hint">Choose between standard CalTopo default evacuation symbology or Canadian BC / NB SAR
+          icons. The colors and categories configured here define how icons translate to evacuation statuses and
+          dashboard counters.</p>
+
+        <!-- Scheme Quick Selector Buttons -->
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary" id="btnSelectSchemeCaltopo">
+            🌲 CalTopo Default Scheme (8 icons)
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnSelectSchemeBcnb">
+            🍁 BC / NB Canada Scheme (5 icons)
+          </button>
+        </div>
+
+        <div id="presetsList" style="margin-bottom: 1.25rem;"></div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+          <button type="button" class="btn btn-secondary" id="btnExportPresets">📤 Export Agency Presets
+            (.json)</button>
+          <label class="btn btn-secondary" style="margin-bottom: 0.5rem; cursor: pointer;">
+            📥 Import Agency Presets (.json)
+            <input type="file" id="presetFileInput" accept=".json,application/json" class="file-input-hidden">
+          </label>
+          <button type="button" class="btn btn-secondary" id="btnResetPresets">↺ Reset Scheme to Defaults</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+
+        <h2>Session Persistence & Operational Privacy</h2>
+        <p class="guide-hint">This application runs completely in-memory and caches state in your browser with a 48-hour
+          sliding inactivity window. Every user interaction automatically refreshes the 48-hour timer to protect multi-day operations.
+          All data is automatically purged after 48 consecutive hours of zero activity, or immediately by clicking the button below.</p>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn btn-danger" id="btnPurgeSessionSettings">
+            🗑️ Purge All Incident Data Now
+          </button>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Use at shift change or when incident is
+            resolved.</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- FIELD GUIDE & HELP CENTER (Walkthrough, CalTopo SOPs, Glossary, Resources) -->
+    <div id="tabHelp" class="tab-content" role="tabpanel">
+      <section>
+        <h2>📖 Operational Field Guide & Help Center</h2>
+        <p class="guide-hint">Complete incident operational workflow, CalTopo field instructions, status glossary, and
+          key external resources for SAR Managers, Planning Section Chiefs, and Field Searchers.</p>
+
+        <!-- Quick Jump Links -->
+        <div class="help-toc">
+          <a class="help-toc-pill" href="#secWorkflow">🚀 4-Phase Operational Workflow</a>
+          <a class="help-toc-pill" href="#secCaltopo">🗺️ CalTopo Field Setup Guide</a>
+          <a class="help-toc-pill" href="#secGlossary">🏷️ Symbology & Reconciliation Glossary</a>
+          <a class="help-toc-pill" href="#secFaq">❓ Incident FAQ & Troubleshooting</a>
+          <a class="help-toc-pill" href="#secResources">🔗 External Documentation & Tools</a>
+        </div>
+
+        <!-- Section 1: 4-Phase Operational Workflow -->
+        <div class="help-block" id="secWorkflow">
+          <h3>🚀 4-Phase Operational Workflow (From Ingest to Demob)</h3>
+          <p>This tool bridges 911 dispatch databases and CalTopo to ensure <strong>100% accountability</strong> of
+            residential structures during high-stress evacuation incidents:</p>
+
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 0.85rem;">
+            <div
+              style="background: var(--dropzone-bg); padding: 0.85rem; border-radius: 6px; border-left: 3px solid var(--accent);">
+              <h4 style="margin: 0 0 0.35rem; color: var(--accent);">1. Ingest Master List (ICP)</h4>
+              <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Load 911 parcel or address CSV
+                in <strong>Step 1</strong>. Map Latitude, Longitude, and Address. Specify an optional <strong>Street
+                  Name</strong> column so CalTopo automatically generates individual folders per street.</p>
+            </div>
+
+            <div
+              style="background: var(--dropzone-bg); padding: 0.85rem; border-radius: 6px; border-left: 3px solid var(--primary-btn);">
+              <h4 style="margin: 0 0 0.35rem; color: var(--primary-btn);">2. Build & Deploy CalTopo Map</h4>
+              <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Click <em>"Build CalTopo Map
+                  File"</em> and download the GeoJSON. Import this file into your team's CalTopo incident map (`Import →
+                GeoJSON`). Share the map bookmark/link with field team leaders.</p>
+            </div>
+
+            <div
+              style="background: var(--dropzone-bg); padding: 0.85rem; border-radius: 6px; border-left: 3px solid #fbc02d;">
+              <h4 style="margin: 0 0 0.35rem; color: #f57f17;">3. Field Search & Evac Tracking</h4>
+              <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Searchers open CalTopo on mobile
+                devices. As they knock on doors, they tap the structure waypoint and change its icon to reflect status
+                (Evacuating, Refused, Needs Assistance, etc.).</p>
+            </div>
+
+            <div
+              style="background: var(--dropzone-bg); padding: 0.85rem; border-radius: 6px; border-left: 3px solid #8e24aa;">
+              <h4 style="margin: 0 0 0.35rem; color: #8e24aa;">4. Reconcile & Triage (ICP)</h4>
+              <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">Periodically export GeoJSON from
+                CalTopo (`Export → GeoJSON`) and drop it into <strong>Step 2</strong>. The dashboard reconciles field
+                marks against your master CSV and flags unvisited structures.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: CalTopo Field Setup Guide -->
+        <div class="help-block" id="secCaltopo">
+          <h3>🗺️ CalTopo Field Setup & Sync Guide</h3>
+
+          <h4 style="margin: 0.75rem 0 0.35rem; font-size: 0.95rem; color: var(--accent);">How to Import into CalTopo
+            (Incident Command Post):</h4>
+          <ol class="guide-step-list">
+            <li>Download the GeoJSON file from <strong>Step 1</strong> of this tool.</li>
+            <li>In your CalTopo incident map, click <strong>Import</strong> in the left sidebar menu (or <em>Add ➔
+                Import</em>).</li>
+            <li>Select your downloaded <code>.geojson</code> file.</li>
+            <li>Confirm all folders and points are checked, then click <strong>Import</strong>.</li>
+            <li>Under map settings, copy the <em>Share Map</em> URL or generate a QR code for searchers to scan onto
+              their mobile devices.</li>
+          </ol>
+
+          <h4 style="margin: 1rem 0 0.35rem; font-size: 0.95rem; color: var(--accent);">How Field Responders Update
+            Waypoints on Mobile:</h4>
+          <ol class="guide-step-list">
+            <li>Open the CalTopo Mobile App (available on iOS and Android) and open the incident map.</li>
+            <li><strong>Pre-download offline map layers</strong> before departing the command post in case cell coverage
+              is lost.</li>
+            <li>Upon arriving at a residence, tap the structure's waypoint on the map.</li>
+            <li>Tap <strong>Edit</strong> (pencil icon), tap the icon symbol/color, and select the appropriate
+              evacuation icon (e.g., green <em>Evacuating</em>, red <em>Needs Assistance</em>, or orange
+              <em>Refused</em>).
+            </li>
+            <li>Add any critical notes (e.g., <em>"2 elderly occupants, 1 dog evacuated"</em>) into the waypoint
+              comment/description field and tap <strong>Save</strong>.</li>
+          </ol>
+
+          <h4 style="margin: 1rem 0 0.35rem; font-size: 0.95rem; color: var(--accent);">How to Export Field Updates for
+            Reconciliation:</h4>
+          <ol class="guide-step-list">
+            <li>In CalTopo, click <strong>Export</strong> in the top menu bar.</li>
+            <li>Select <strong>GeoJSON</strong> format.</li>
+            <li>Ensure the evacuation folders are checked and click <strong>Export</strong> to download the file.</li>
+            <li>Drop that file into <strong>Step 2</strong> of this tool to instantly see updated counts and unvisited
+              homes.</li>
+          </ol>
+        </div>
+
+        <!-- Section 3: Symbology & Reconciliation Glossary -->
+        <div class="help-block" id="secGlossary">
+          <h3>🏷️ Symbology & Reconciliation Glossary</h3>
+          <p>Understanding the difference between reconciliation categories is critical for life-safety accountability:
+          </p>
+
+          <div style="margin-bottom: 1.25rem;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="background: var(--secondary-btn-bg);">
+                  <th style="padding: 0.5rem 0.75rem; text-align: left; width: 28%;">Reconciliation Category</th>
+                  <th style="padding: 0.5rem 0.75rem; text-align: left; width: 42%;">What it Means</th>
+                  <th style="padding: 0.5rem 0.75rem; text-align: left; width: 30%;">Operational Action Required</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background: rgba(142, 36, 170, 0.08);">
+                  <td style="padding: 0.6rem 0.75rem; font-weight: 700; color: #8e24aa;">
+                    ⚠️ UNVISITED (Master Only) / Missing / Diff
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    This address exists in your initial Master CSV roster, but was <strong>completely missing</strong>
+                    from the CalTopo export. (Not plotted, deleted, or coordinates drastically changed).
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    <strong>High Priority:</strong> Verify why this house is missing. Dispatch field teams to check if
+                    the residence was bypassed or accidentally left off the field map.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.6rem 0.75rem; font-weight: 700; color: #1565c0;">
+                    🔵 Unchecked / Not Visited
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    The structure is plotted on the CalTopo map, but still carries the default initial blue pin. Field
+                    teams have not yet logged an evacuation status.
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    Assign to incoming field teams for initial door-to-door evacuation notification.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.6rem 0.75rem; font-weight: 700; color: #00a651;">
+                    🌱 Added in Field (New Structure)
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    A structure waypoint added directly by field teams that does not match any row in the original
+                    master roster (e.g. unrecorded ADU, cabin, or RV trailer).
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    Cross-reference with GIS and add resident details to the incident record.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.6rem 0.75rem; font-weight: 700; color: #78909c;">
+                    📍 ICS / Incident Point
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    Non-residential markers (Roadblocks, Staging Areas, Helispots, Landing Zones) placed on the map.
+                  </td>
+                  <td style="padding: 0.6rem 0.75rem;">
+                    Automatically isolated so incident landmarks do not inflate residential evacuation numbers.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4 style="margin: 1.25rem 0 0.5rem; font-size: 0.95rem; color: var(--accent);">CalTopo Default Evacuation
+            Icon Standard:</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.65rem;">
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #00a651;">
+              <strong>Evacuating / Cleared</strong> (#00a651)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Occupants have evacuated or are leaving now.
+                Structure safe & clear.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #fff200;">
+              <strong>Needs Assistance</strong> (#fff200)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Urgent: Resident requires evacuation
+                transport, medical assistance, or EMS.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #f7941d;">
+              <strong>Sheltering In Place</strong> (#f7941d)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Occupant staying in structure (either by
+                choice or escape routes cut off).</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #ff914d;">
+              <strong>Refused Evacuation</strong> (#ff914d)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Occupant was contacted and informed of danger,
+                but refused to depart.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #a7a9ac;">
+              <strong>No Response / Followup</strong> (#a7a9ac)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">No answer at door; team could not verify if
+                occupants are home or gone.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #a97c50;">
+              <strong>Unattended Animal</strong> (#a97c50)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Livestock or pets left behind requiring Animal
+                Control / rescue.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #d32f2f;">
+              <strong>Residence Not Accessible</strong> (#d32f2f)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Driveway blocked by locked gate, downed trees,
+                fire, or flooding.</span>
+            </div>
+            <div
+              style="background: var(--dropzone-bg); padding: 0.65rem; border-radius: 4px; border-left: 3px solid #424242;">
+              <strong>No Residence Exists</strong> (#424242)<br>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Vacant lot or commercial parcel; no
+                residential home present.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Incident FAQ & Troubleshooting -->
+        <div class="help-block" id="secFaq">
+          <h3>❓ Incident FAQ & Troubleshooting</h3>
+
+          <div style="margin-bottom: 0.85rem;">
+            <strong>Q: What happens if my command post laptop shuts down or the browser tab closes?</strong>
+            <p style="margin: 0.25rem 0 0.5rem; font-size: 0.85rem; color: var(--text-muted);">All loaded data, column
+              mappings, and triage reviews are securely cached in your local browser memory with a 48-hour sliding inactivity
+              timer. Every interaction automatically refreshes this 48-hour window, so ongoing multi-day operations are
+              never lost. Incident data is only automatically cleared after 48 consecutive hours of complete inactivity.</p>
+          </div>
+
+          <div style="margin-bottom: 0.85rem;">
+            <strong>Q: What coordinate formats are accepted?</strong>
+            <p style="margin: 0.25rem 0 0.5rem; font-size: 0.85rem; color: var(--text-muted);">The tool expects
+              coordinates in standard Decimal Degrees WGS84 (e.g. Latitude: <code>39.7592</code>, Longitude:
+              <code>-121.6219</code>). If your coordinates are in MGRS, USNG, UTM, or Degrees/Minutes, convert them to
+              decimal degrees prior to import.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 0.85rem;">
+            <strong>Q: What if field teams lose cellular service in the canyon / backcountry?</strong>
+            <p style="margin: 0.25rem 0 0.5rem; font-size: 0.85rem; color: var(--text-muted);">The CalTopo mobile app
+              operates fully offline with internal GPS. Before leaving the Command Post, searchers must open CalTopo,
+              tap <em>Download Offline Map</em>, and cache the incident area. Status edits will save locally on their
+              phones and sync back to the team map when they regain cellular or ICP Wi-Fi coverage.</p>
+          </div>
+
+          <div style="margin-bottom: 0.85rem;">
+            <strong>Q: How do I share updates with EOC / EMO / EMCR / ECC / AHJ?</strong>
+            <p style="margin: 0.25rem 0 0.5rem; font-size: 0.85rem; color: var(--text-muted);">In <strong>Step
+                2</strong>, use the <em>"Download Filtered CSV"</em> (e.g. for only "Needs Assistance" cases) or
+              <em>"Download All CSV"</em> to provide an official spreadsheet to the Planning Section Chief or EOC for
+              ICS-204 assignment documentation.
+            </p>
+          </div>
+        </div>
+
+        <!-- Section 5: External Resources & Tooling Links -->
+        <div class="help-block" id="secResources">
+          <h3>🔗 External Documentation & Tools</h3>
+          <p>Official CalTopo reference guides and national SAR operational resources:</p>
+
+          <div class="resource-grid">
+            <div class="resource-card">
+              <h4>CalTopo: Importing & Exporting Data</h4>
+              <p>Official guide explaining file formats, layer options, and step-by-step import/export menus in CalTopo
+                web and desktop.</p>
+              <a href="https://training.caltopo.com/all_users/import-export" target="_blank" rel="noopener"
+                class="res-link">
+                View CalTopo Import/Export Guide ↗
+              </a>
+            </div>
+
+            <div class="resource-card">
+              <h4>CalTopo Mobile App: Offline Caching</h4>
+              <p>How field searchers download offline maps and record waypoint changes without cellular reception.</p>
+              <a href="https://training.caltopo.com/all_users/mobile/offline" target="_blank" rel="noopener"
+                class="res-link">
+                View Mobile Offline SOP ↗
+              </a>
+            </div>
+
+            <div class="resource-card">
+              <h4>CalTopo Shared Maps & Live Tracking</h4>
+              <p>Setting up agency team accounts, sharing real-time map links, and managing responder permissions in the
+                field.</p>
+              <a href="https://training.caltopo.com/all_users/share/live-tracking" target="_blank" rel="noopener"
+                class="res-link">
+                View Shared Maps Guide ↗
+              </a>
+            </div>
+            <div class="resource-card">
+              <h4>Project Repository & Offline Downloads</h4>
+              <p>Source code, latest standalone HTML builds, release notes, and issue tracker on GitHub.</p>
+              <a href="https://github.com/Bradley-Parker/SAR-Evac-Tools" target="_blank" rel="noopener"
+                class="res-link">
+                Open GitHub Repository ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Term Definition Modal / Popover -->
+  <div id="infoModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true"
+    aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Definition</h3>
+        <button type="button" class="modal-close" id="btnModalClose" title="Close dialog"
+          aria-label="Close dialog">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+      <div style="text-align: right; margin-top: 1rem;">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnModalOk">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       CONSTANTS & SCHEMES
+       ========================================================================== */
+    const SESSION_STORAGE_KEY = "sar_evac_session_v1";
+    const SESSION_TTL_MS = 48 * 60 * 60 * 1000; // 48 Hours
+
+    // Scheme 1: CalTopo Official Evacuation Icons
+    const SCHEME_CALTOPO_DEFAULT = [
+      { symbol: "evac-evacuating", label: "Evacuating", color: "#00a651", code: "EVACUATING" },
+      { symbol: "evac-assistance", label: "Needs Assistance", color: "#fff200", code: "ASSISTANCE" },
+      { symbol: "evac-staying", label: "Sheltering In Place", color: "#f7941d", code: "SHELTERING" },
+      { symbol: "evac-knocked", label: "Notified (Did not wait)", color: "#ffffff", code: "NOTIFIED" },
+      { symbol: "evac-noresponse", label: "No Response (Followup Needed)", color: "#a7a9ac", code: "NO_RESPONSE" },
+      { symbol: "evac-animal", label: "Unattended Animal", color: "#a97c50", code: "ANIMAL" },
+      { symbol: "evac-noaccess", label: "Residence Not Accessible", color: "#d32f2f", code: "NO_ACCESS" },
+      { symbol: "evac-noresidence", label: "No Residence Exists", color: "#424242", code: "NO_RESIDENCE" },
+      { symbol: "point", label: "Unchecked / Not Visited", color: "#1565c0", code: "UNCHECKED" }
+    ];
+
+    // Scheme 2: BC / NB Canada SAR Symbols
+    const SCHEME_BC_NB = [
+      { symbol: "icon-P8LSK7CR-24-0.5-0.5-ff", label: "Evacuated", color: "#ffde59", code: "EVACUATED" },
+      { symbol: "icon-NER0GJ0B-24-0.5-0.5-ff", label: "Needs Assistance", color: "#ff3131", code: "ASSISTANCE" },
+      { symbol: "icon-2Q04PF19-24-0.5-0.5-ff", label: "Refused", color: "#ff914d", code: "REFUSED" },
+      { symbol: "icon-R4CFVU3D-24-0.5-0.5-ff", label: "Not Home", color: "#38b6ff", code: "NOT_HOME" },
+      { symbol: "icon-L59G40VL-24-0.5-0.5-ff", label: "Notified", color: "#ff66c4", code: "NOTIFIED" },
+      { symbol: "point", label: "Unchecked / Not Visited", color: "#1565c0", code: "UNCHECKED" }
+    ];
+
+    // All known structure symbols across standard evacuation schemes
+    const ALL_KNOWN_STRUCTURE_SYMBOLS = new Set([
+      "evac-evacuating", "evac-assistance", "evac-staying", "evac-knocked",
+      "evac-noresponse", "evac-animal", "evac-noaccess", "evac-noresidence",
+      "icon-P8LSK7CR-24-0.5-0.5-ff", "icon-NER0GJ0B-24-0.5-0.5-ff",
+      "icon-2Q04PF19-24-0.5-0.5-ff", "icon-R4CFVU3D-24-0.5-0.5-ff",
+      "icon-L59G40VL-24-0.5-0.5-ff", "point"
+    ]);
+
+    // Operational Term Definitions for Clickable/Hover (i) Info Modals
+    const TERM_DEFINITIONS = {
+      MISSING: {
+        title: "Missing / Diff (Master Roster Only)",
+        badgeColor: "#8e24aa",
+        definition: "This structure was listed in your Master CSV dispatch roster, but was NOT found in the CalTopo map export.",
+        whyItHappens: "The structure was either omitted during the initial CalTopo import, deleted by an operator in CalTopo, or its coordinates/address were significantly edited in the field.",
+        action: "Urgent Life-Safety Audit: Verify why this address is absent from CalTopo. Dispatch field teams to check if the residence was bypassed or if it requires manual mapping."
+      },
+      UNCHECKED: {
+        title: "Unchecked / Not Visited",
+        badgeColor: "#1565c0",
+        definition: "This structure is plotted on your CalTopo map with the initial unvisited point icon, but field searchers have not yet updated its evacuation status.",
+        whyItHappens: "Field teams have not yet arrived at this address or have not submitted an icon status change.",
+        action: "Dispatch field searchers to conduct initial door-to-door notification."
+      },
+      FIELD_ADDED: {
+        title: "Added in Field (New Structure)",
+        badgeColor: "#00a651",
+        definition: "A structure marker plotted directly in CalTopo by field teams that does not match any address on the Master CSV.",
+        whyItHappens: "Field teams encountered an unmapped residence, secondary ADU, RV/trailer, or hunting cabin during street sweeps.",
+        action: "Verify the structure with searchers, record resident notes, and notify GIS / Planning."
+      },
+      ICS_POINT: {
+        title: "ICS / Incident Point (Non-Residence)",
+        badgeColor: "#78909c",
+        definition: "An operational marker placed in CalTopo that is not a residential structure (e.g. Staging Area, Helispot, Roadblock, Division Break, LZ).",
+        whyItHappens: "CalTopo incident maps contain operational landmarks in addition to evacuated residences.",
+        action: "Automatically isolated so incident landmarks do not distort residential evacuation percentages. Filter anytime via the 'ICS Points' button."
+      },
+      RECONCILIATION: {
+        title: "Two-Way Operational Reconciliation",
+        badgeColor: "#1b5e20",
+        definition: "Automated cross-check comparing the official Master CSV address list against real-time CalTopo field map markers.",
+        whyItHappens: "Ensures 100% accountability so no home is overlooked and newly discovered structures in the field are accounted for.",
+        action: "Examine status counters and audit any purple 'Missing / Diff' structures before concluding evacuation operations."
+      },
+      EVACUATING: {
+        title: "Cleared / Evacuating",
+        badgeColor: "#00a651",
+        definition: "Residents have evacuated or are actively in the process of leaving the hazard zone.",
+        whyItHappens: "Confirmed in person or visually by door-to-door search teams.",
+        action: "Structure is cleared. No further evacuation team dispatch required."
+      },
+      ASSISTANCE: {
+        title: "Needs Assistance (Urgent)",
+        badgeColor: "#fff200",
+        definition: "Resident requires urgent emergency evacuation assistance (e.g. mobility impaired, bedridden, oxygen-dependent, or lacking transport).",
+        whyItHappens: "Identified directly by field teams or flagged in dispatch CAD records.",
+        action: "Immediate Priority: Dispatch transport vans, EMS, or rescue assets to evacuate resident."
+      },
+      SHELTERING: {
+        title: "Sheltering in Place",
+        badgeColor: "#f7941d",
+        definition: "Resident is remaining inside structure (either by choice or because safe egress routes are blocked).",
+        whyItHappens: "Resident elected to stay, or terrain/smoke/fire prevents transit.",
+        action: "Document occupant count, notify Operations/Safety Officer, and maintain situational monitoring."
+      },
+      REFUSED: {
+        title: "Refused Evacuation",
+        badgeColor: "#ff914d",
+        definition: "Resident was advised of evacuation order but explicitly refused to leave.",
+        whyItHappens: "Adult occupant acknowledged hazard and elected to remain.",
+        action: "Document occupant count, next-of-kin, and advise that emergency responders may not be able to return once conditions deteriorate."
+      },
+      NOTIFIED: {
+        title: "Notified (Did not wait)",
+        badgeColor: "#ffffff",
+        definition: "Evacuation notice or door hanger delivered; team did not wait for resident to open door.",
+        whyItHappens: "Rapid-advance notification protocol under fast-moving fire/flood conditions.",
+        action: "Address has been notified. Follow-up sweep may be scheduled if operational window permits."
+      },
+      NO_RESPONSE: {
+        title: "No Response (Followup Needed)",
+        badgeColor: "#a7a9ac",
+        definition: "No answer at door; searchers could not verify if occupants are home or gone.",
+        whyItHappens: "Door knocked repeatedly with no response and no vehicles visible.",
+        action: "Schedule secondary sweep or cross-reference phone roster."
+      },
+      ANIMAL: {
+        title: "Unattended Animal",
+        badgeColor: "#a97c50",
+        definition: "Pets, horses, or livestock left on parcel requiring rescue or sheltering.",
+        whyItHappens: "Discovered by field teams or reported by evacuated neighbors.",
+        action: "Coordinate with Animal Control / Humane Evacuation teams."
+      },
+      NO_ACCESS: {
+        title: "Residence Not Accessible",
+        badgeColor: "#d32f2f",
+        definition: "Driveway or road impassable due to locked gate, downed power lines, fire, or flood.",
+        whyItHappens: "Physical access to structure is obstructed.",
+        action: "Task heavy equipment, notify Law Enforcement for gate codes, or re-route."
+      },
+      NO_RESIDENCE: {
+        title: "No Residence Exists",
+        badgeColor: "#424242",
+        definition: "Parcel does not contain a habitable dwelling (vacant land, barn, or commercial lot).",
+        whyItHappens: "Parcel databases often contain parcels without residential homes.",
+        action: "Cleared from active residential evacuation roster."
+      }
+    };
+
+    /* ==========================================================================
+       STATE MANAGEMENT
+       ========================================================================== */
+    const state = {
+      theme: "day",
+      activeTab: "tabStep1",
+      activeSchemeKey: "caltopo", // 'caltopo', 'bcnb', 'custom'
+      presets: JSON.parse(JSON.stringify(SCHEME_CALTOPO_DEFAULT)),
+      masterRoster: [], // Array of { address, street, lat, lon, rawRow }
+      csvRawText: "",
+      csvFilename: "",
+      colLat: "",
+      colLon: "",
+      colAddress: "",
+      colStreet: "", // Optional street column for folder grouping
+      caltopoFolder: "Evacuation Roster",
+      generatedGeoJson: null,
+      generatedGpx: null,
+      geoJsonRawText: "",
+      geoFilename: "",
+      reconciledRows: [], // All rows (structures + ICS points)
+      icsCount: 0,
+      crossSchemeDetected: null, // { schemeKey, schemeName, count, presets }
+      activeFilter: "ALL",
+      searchQuery: "",
+      sessionCreatedAt: Date.now(),
+      lastActiveAt: Date.now()
+    };
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    window.addEventListener("DOMContentLoaded", function () {
+      initSession();
+      initTheme();
+      initTabs();
+      initDropzones();
+      initStep1Events();
+      initStep2Events();
+      initPresetEvents();
+      initActivityListeners();
+      updateDynamicUI();
+      updateSessionBanner();
+      setInterval(updateSessionBanner, 60000);
+    });
+
+    // Sliding TTL Inactivity Window: Renew 48h clock on user interaction
+    let lastInteractionTime = Date.now();
+    function initActivityListeners() {
+      function onUserInteraction() {
+        const now = Date.now();
+        // Throttle localStorage updates to at most once every 2 minutes of active use
+        if (now - lastInteractionTime > 2 * 60 * 1000) {
+          lastInteractionTime = now;
+          saveSession(true);
+        }
+      }
+      window.addEventListener("pointerdown", onUserInteraction, { passive: true });
+      window.addEventListener("keydown", onUserInteraction, { passive: true });
+    }
+
+    /* ==========================================================================
+       SESSION PERSISTENCE & 48-HOUR SLIDING INACTIVITY TTL (PROP-05)
+       ========================================================================== */
+    function initSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (!raw) {
+          state.sessionCreatedAt = Date.now();
+          state.lastActiveAt = Date.now();
+          saveSession();
+          return;
+        }
+
+        const session = JSON.parse(raw);
+        const lastActive = session.lastActiveAt || session.timestamp || 0;
+        const inactiveDuration = Date.now() - lastActive;
+
+        if (inactiveDuration > SESSION_TTL_MS) {
+          purgeSessionData(false);
+          showMessage("msgStep1", "Notice: Previous session had over 48 hours of inactivity and was automatically purged.", "info");
+          return;
+        }
+
+        // Active right now: renew the 48-hour sliding window so active incidents are never lost
+        state.lastActiveAt = Date.now();
+        state.sessionCreatedAt = session.sessionCreatedAt || session.timestamp || Date.now();
+        if (session.payload) {
+          const p = session.payload;
+          if (p.theme) state.theme = p.theme;
+          if (p.activeTab) state.activeTab = p.activeTab;
+          if (p.activeSchemeKey) state.activeSchemeKey = p.activeSchemeKey;
+          if (p.presets && Array.isArray(p.presets) && p.presets.length > 0) state.presets = p.presets;
+          if (p.csvRawText) state.csvRawText = p.csvRawText;
+          if (p.csvFilename) state.csvFilename = p.csvFilename;
+          if (p.colLat) state.colLat = p.colLat;
+          if (p.colLon) state.colLon = p.colLon;
+          if (p.colAddress) state.colAddress = p.colAddress;
+          if (p.colStreet) state.colStreet = p.colStreet;
+          if (p.caltopoFolder) state.caltopoFolder = p.caltopoFolder;
+          if (p.masterRoster && Array.isArray(p.masterRoster)) state.masterRoster = p.masterRoster;
+          if (p.geoJsonRawText) state.geoJsonRawText = p.geoJsonRawText;
+          if (p.geoFilename) state.geoFilename = p.geoFilename;
+        }
+
+        if (state.csvRawText) {
+          document.getElementById("csvTextInput").value = state.csvRawText;
+          loadCsvText(state.csvRawText, false);
+        }
+        if (state.geoJsonRawText) {
+          document.getElementById("geoTextInput").value = state.geoJsonRawText;
+          processGeoJsonText(state.geoJsonRawText, false);
+        }
+        if (state.caltopoFolder) {
+          document.getElementById("caltopoFolder").value = state.caltopoFolder;
+        }
+
+        saveSession(true);
+      } catch (err) {
+        console.error("Failed to load session:", err);
+      }
+    }
+
+    function saveSession(renewActivity = true) {
+      if (renewActivity) {
+        state.lastActiveAt = Date.now();
+      }
+      try {
+        const session = {
+          timestamp: state.lastActiveAt,
+          lastActiveAt: state.lastActiveAt,
+          sessionCreatedAt: state.sessionCreatedAt,
+          ttlHours: 48,
+          payload: {
+            theme: state.theme,
+            activeTab: state.activeTab,
+            activeSchemeKey: state.activeSchemeKey,
+            presets: state.presets,
+            csvRawText: state.csvRawText,
+            csvFilename: state.csvFilename,
+            colLat: state.colLat,
+            colLon: state.colLon,
+            colAddress: state.colAddress,
+            colStreet: state.colStreet,
+            caltopoFolder: state.caltopoFolder,
+            masterRoster: state.masterRoster,
+            geoJsonRawText: state.geoJsonRawText,
+            geoFilename: state.geoFilename
+          }
+        };
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+        updateSessionBanner();
+      } catch (err) {
+        console.warn("localStorage quota exceeded or disabled:", err);
+      }
+    }
+
+    function purgeSessionData(promptUser = true) {
+      if (promptUser) {
+        const confirmed = confirm("Are you sure you want to PURGE all cached incident data?\n\nMake sure you have downloaded all CSV or GeoJSON files to your local drive before purging.");
+        if (!confirmed) return;
+      }
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      state.masterRoster = [];
+      state.csvRawText = "";
+      state.csvFilename = "";
+      state.colLat = "";
+      state.colLon = "";
+      state.colAddress = "";
+      state.colStreet = "";
+      state.generatedGeoJson = null;
+      state.generatedGpx = null;
+      state.geoJsonRawText = "";
+      state.geoFilename = "";
+      state.reconciledRows = [];
+      state.icsCount = 0;
+      state.crossSchemeDetected = null;
+      state.sessionCreatedAt = Date.now();
+      state.lastActiveAt = Date.now();
+
+      document.getElementById("csvTextInput").value = "";
+      document.getElementById("geoTextInput").value = "";
+      document.getElementById("csvMappingContainer").style.display = "none";
+      document.getElementById("previewDetailsStep1").style.display = "none";
+      document.getElementById("btnDownloadGeoJson").disabled = true;
+      document.getElementById("btnDownloadGpx").disabled = true;
+      document.getElementById("btnDownloadFilteredCsv").disabled = true;
+      document.getElementById("btnDownloadAllCsv").disabled = true;
+      document.getElementById("msgStep1").innerHTML = "";
+      document.getElementById("msgStep2").innerHTML = "";
+      document.getElementById("crossSchemeBanner").style.display = "none";
+      document.getElementById("icsPointsNotice").style.display = "none";
+      updateRosterStatusNotice();
+      updateDynamicUI();
+      updateSessionBanner();
+      if (promptUser) {
+        alert("All cached incident data has been purged.");
+      }
+    }
+
+    function updateSessionBanner() {
+      const elapsed = Date.now() - (state.lastActiveAt || Date.now());
+      const remainingMs = Math.max(0, SESSION_TTL_MS - elapsed);
+      const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+      const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      const el = document.getElementById("sessionTimeRemaining");
+      if (el) {
+        el.textContent = `Auto-purge (48h idle): ${remainingHours}h ${remainingMinutes}m`;
+      }
+    }
+
+    /* ==========================================================================
+       THEME & NAVIGATION (Layout locked against jitter)
+       ========================================================================== */
+    function initTheme() {
+      const btn = document.getElementById("btnToggleTheme");
+      btn.addEventListener("click", toggleTheme);
+      applyTheme(state.theme);
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === "day" ? "night" : "day";
+      applyTheme(state.theme);
+      saveSession();
+      renderDashboardCounters();
+      renderFilterPills();
+      renderTriageTable();
+    }
+
+    function applyTheme(theme) {
+      const isNight = theme === "night";
+      document.body.classList.toggle("night-mode", isNight);
+      document.getElementById("themeIcon").textContent = isNight ? "☀️" : "🌙";
+      document.getElementById("themeLabel").textContent = isNight ? "Day Mode" : "Night Vision Mode";
+    }
+
+    function initTabs() {
+      const tabs = document.querySelectorAll(".nav-tab");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          const targetId = tab.getAttribute("data-tab");
+          switchTab(targetId);
+        });
+      });
+      switchTab(state.activeTab || "tabStep1");
+    }
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      document.querySelectorAll(".nav-tab").forEach(t => {
+        t.classList.toggle("active", t.getAttribute("data-tab") === tabId);
+      });
+      document.querySelectorAll(".tab-content").forEach(c => {
+        c.classList.toggle("active", c.id === tabId);
+      });
+      saveSession();
+    }
+
+    function initDropzones() {
+      setupDropzone("csvDropzone", "csvFileInput", handleCsvFile);
+      setupDropzone("geoDropzone", "geoFileInput", handleGeoFile);
+      document.getElementById("btnPurgeSession").addEventListener("click", () => purgeSessionData(true));
+      document.getElementById("btnPurgeSessionSettings").addEventListener("click", () => purgeSessionData(true));
+    }
+
+    function setupDropzone(dropzoneId, inputId, onFileLoaded) {
+      const zone = document.getElementById(dropzoneId);
+      const input = document.getElementById(inputId);
+
+      zone.addEventListener("click", () => input.click());
+      zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("dragover"); });
+      zone.addEventListener("dragleave", () => { zone.classList.remove("dragover"); });
+      zone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        zone.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          onFileLoaded(e.dataTransfer.files[0]);
+        }
+      });
+      input.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          onFileLoaded(e.target.files[0]);
+        }
+      });
+    }
+
+    /* ==========================================================================
+       STEP 1: CSV INGESTION & CALTOPO GEOJSON WITH STREET FOLDERS
+       ========================================================================== */
+    function initStep1Events() {
+      document.getElementById("csvTextInput").addEventListener("blur", function () {
+        const val = this.value.trim();
+        if (val && val !== state.csvRawText) loadCsvText(val, true);
+      });
+
+      document.getElementById("colLat").addEventListener("change", (e) => { state.colLat = e.target.value; saveSession(); });
+      document.getElementById("colLon").addEventListener("change", (e) => { state.colLon = e.target.value; saveSession(); });
+      document.getElementById("colAddress").addEventListener("change", (e) => { state.colAddress = e.target.value; saveSession(); });
+      document.getElementById("colStreet").addEventListener("change", (e) => {
+        state.colStreet = e.target.value;
+        updateStreetGroupingHint();
+        saveSession();
+      });
+      document.getElementById("caltopoFolder").addEventListener("input", (e) => {
+        state.caltopoFolder = e.target.value.trim() || "Evacuation Roster";
+        updateStreetGroupingHint();
+        saveSession();
+      });
+
+      document.getElementById("btnBuildGeoJson").addEventListener("click", generateCaltopoGeoJson);
+      document.getElementById("btnBuildGpx").addEventListener("click", generateGpx);
+
+      document.getElementById("btnDownloadGeoJson").addEventListener("click", () => {
+        if (state.generatedGeoJson) {
+          const fn = (state.csvFilename ? state.csvFilename.replace(/\.csv$/i, "") : "caltopo_evac_roster") + ".geojson";
+          downloadFile(fn, JSON.stringify(state.generatedGeoJson, null, 2), "application/geo+json");
+        }
+      });
+
+      document.getElementById("btnDownloadGpx").addEventListener("click", () => {
+        if (state.generatedGpx) {
+          const fn = (state.csvFilename ? state.csvFilename.replace(/\.csv$/i, "") : "caltopo_evac_roster") + ".gpx";
+          downloadFile(fn, state.generatedGpx, "application/gpx+xml");
+        }
+      });
+    }
+
+    function updateStreetGroupingHint() {
+      const hint = document.getElementById("streetGroupingHint");
+      if (!hint) return;
+      if (state.colStreet) {
+        hint.innerHTML = `Grouping: <strong>By Street Name</strong> (creates a CalTopo folder per unique street in "${state.colStreet}")`;
+        hint.style.color = "var(--primary-btn)";
+      } else {
+        hint.innerHTML = `Grouping: Single master folder ("${state.caltopoFolder || 'Evacuation Roster'}")`;
+        hint.style.color = "var(--text-muted)";
+      }
+    }
+
+    function handleCsvFile(file) {
+      if (!file) return;
+      state.csvFilename = file.name;
+      const reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById("csvTextInput").value = reader.result;
+        loadCsvText(reader.result, true);
+      };
+      reader.readAsText(file);
+    }
+
+    function loadCsvText(text, persist = true) {
+      state.csvRawText = text;
+      const parsed = parseCsv(text);
+      if (parsed.headers.length === 0) {
+        showMessage("msgStep1", "No header row detected in CSV file.", "err");
+        return;
+      }
+
+      const latGuess = state.colLat || guessColumn(parsed.headers, ["lat", "latitude", "y", "lat_dd"]);
+      const lonGuess = state.colLon || guessColumn(parsed.headers, ["lon", "lng", "long", "longitude", "x", "lon_dd"]);
+      const addrGuess = state.colAddress || guessColumn(parsed.headers, ["address", "full_address", "site_addr", "street_address", "location", "name", "title"]);
+      const streetGuess = state.colStreet || guessColumn(parsed.headers, ["street_name", "street", "streetname", "road", "st_name", "road_name", "street name", "road name", "st_nm"]);
+
+      fillSelect("colLat", parsed.headers, latGuess);
+      fillSelect("colLon", parsed.headers, lonGuess);
+      fillSelect("colAddress", parsed.headers, addrGuess);
+      fillSelect("colStreet", parsed.headers, streetGuess, "— none (single folder) —");
+
+      state.colLat = latGuess;
+      state.colLon = lonGuess;
+      state.colAddress = addrGuess;
+      state.colStreet = streetGuess;
+
+      updateStreetGroupingHint();
+      buildMasterRosterFromParsed(parsed);
+
+      document.getElementById("csvMappingContainer").style.display = "block";
+      showMessage("msgStep1", `Loaded ${parsed.rows.length} address row(s) from CSV. Confirm column mapping, then click "Build CalTopo Map File".`, "ok");
+
+      updateRosterStatusNotice();
+      if (persist) saveSession();
+    }
+
+    function buildMasterRosterFromParsed(parsed) {
+      const latIdx = parsed.headers.indexOf(state.colLat);
+      const lonIdx = parsed.headers.indexOf(state.colLon);
+      const addrIdx = state.colAddress ? parsed.headers.indexOf(state.colAddress) : -1;
+      const streetIdx = state.colStreet ? parsed.headers.indexOf(state.colStreet) : -1;
+
+      state.masterRoster = [];
+      let skipped = 0;
+
+      for (let i = 0; i < parsed.rows.length; i++) {
+        const row = parsed.rows[i];
+        const lat = latIdx >= 0 ? parseFloat(row[latIdx]) : NaN;
+        const lon = lonIdx >= 0 ? parseFloat(row[lonIdx]) : NaN;
+        const address = addrIdx >= 0 ? (row[addrIdx] || `Structure ${i + 1}`) : `Structure ${i + 1}`;
+        const street = streetIdx >= 0 && row[streetIdx] ? row[streetIdx].trim() : "";
+
+        if (isNaN(lat) || isNaN(lon)) {
+          skipped++;
+          continue;
+        }
+
+        state.masterRoster.push({
+          id: `master-${i + 1}`,
+          address: address.trim(),
+          street: street,
+          lat: lat,
+          lon: lon,
+          rawRow: row
+        });
+      }
+
+      if (state.geoJsonRawText) reconcileMasterWithGeoJson();
+    }
+
+    function generateCaltopoGeoJson() {
+      if (!state.csvRawText.trim()) {
+        showMessage("msgStep1", "Please load a CSV file first.", "err");
+        return;
+      }
+      const parsed = parseCsv(state.csvRawText);
+      buildMasterRosterFromParsed(parsed);
+
+      if (state.masterRoster.length === 0) {
+        showMessage("msgStep1", "Could not build map file: No valid rows with numeric latitude and longitude found.", "err");
+        return;
+      }
+
+      const defaultFolder = document.getElementById("caltopoFolder").value.trim() || "Evacuation Roster";
+      const defaultPreset = state.presets.find(p => p.code === "UNCHECKED") || state.presets[0];
+
+      const features = [];
+      const folderMap = new Map();
+
+      function getOrCreateFolderId(folderTitle) {
+        if (!folderMap.has(folderTitle)) {
+          const folderId = "folder-" + Math.random().toString(36).substring(2, 10);
+          folderMap.set(folderTitle, folderId);
+
+          features.push({
+            type: "Feature",
+            id: folderId,
+            geometry: null,
+            properties: {
+              title: folderTitle,
+              class: "Folder",
+              visible: true,
+              labelVisible: true
+            }
+          });
+        }
+        return folderMap.get(folderTitle);
+      }
+
+      const groupByStreet = Boolean(state.colStreet);
+
+      state.masterRoster.forEach((item, idx) => {
+        let folderTitle = defaultFolder;
+        if (groupByStreet && item.street) {
+          folderTitle = item.street;
+        }
+
+        const folderId = getOrCreateFolderId(folderTitle);
+
+        // Clutter-free properties: description dropped per user request
+        features.push({
+          type: "Feature",
+          id: `evac-pt-${idx + 1}`,
+          geometry: {
+            type: "Point",
+            coordinates: [item.lon, item.lat]
+          },
+          properties: {
+            title: item.address,
+            "marker-symbol": defaultPreset.symbol,
+            "marker-color": defaultPreset.color,
+            "marker-size": 1,
+            folderId: folderId,
+            class: "Marker"
+          }
+        });
+      });
+
+      state.generatedGeoJson = {
+        type: "FeatureCollection",
+        features: features
+      };
+
+      const geoJsonStr = JSON.stringify(state.generatedGeoJson, null, 2);
+      document.getElementById("btnDownloadGeoJson").disabled = false;
+      document.getElementById("previewDetailsStep1").style.display = "block";
+      document.getElementById("previewStep1").textContent = geoJsonStr.slice(0, 3000) + (geoJsonStr.length > 3000 ? "\n... (truncated preview)" : "");
+
+      const folderCount = folderMap.size;
+      showMessage("msgStep1", `Success! CalTopo GeoJSON created with ${state.masterRoster.length} structure markers across ${folderCount} folder(s). Ready to download and import into CalTopo.`, "ok");
+      saveSession();
+    }
+
+    function generateGpx() {
+      if (state.masterRoster.length === 0) {
+        const parsed = parseCsv(state.csvRawText);
+        buildMasterRosterFromParsed(parsed);
+      }
+      if (state.masterRoster.length === 0) {
+        showMessage("msgStep1", "Please select valid coordinate columns before building GPX.", "err");
+        return;
+      }
+
+      let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      gpx += '<gpx version="1.1" creator="SAR Evacuation CalTopo Bridge" xmlns="http://www.topografix.com/GPX/1/1">\n';
+      for (const pt of state.masterRoster) {
+        gpx += `  <wpt lat="${pt.lat}" lon="${pt.lon}">\n`;
+        gpx += `    <name>${escapeXml(pt.address)}</name>\n`;
+        gpx += `    <sym>Waypoint</sym>\n`;
+        gpx += `  </wpt>\n`;
+      }
+      gpx += '</gpx>\n';
+
+      state.generatedGpx = gpx;
+      document.getElementById("btnDownloadGpx").disabled = false;
+      document.getElementById("previewDetailsStep1").style.display = "block";
+      document.getElementById("previewStep1").textContent = gpx.slice(0, 3000) + (gpx.length > 3000 ? "\n... (truncated preview)" : "");
+      showMessage("msgStep1", `Legacy GPX 1.1 ready with ${state.masterRoster.length} waypoint(s).`, "ok");
+      saveSession();
+    }
+
+    /* ==========================================================================
+       STEP 2: CALTOPO GEOJSON INGEST & RECONCILIATION
+       ========================================================================== */
+    function initStep2Events() {
+      document.getElementById("btnProcessGeoText").addEventListener("click", () => {
+        const txt = document.getElementById("geoTextInput").value.trim();
+        if (txt) processGeoJsonText(txt, true);
+      });
+
+      document.getElementById("tableSearch").addEventListener("input", function (e) {
+        state.searchQuery = e.target.value.toLowerCase().trim();
+        renderTriageTable();
+      });
+
+      document.getElementById("btnFilterIcs").addEventListener("click", () => {
+        setActiveFilter("ICS_POINT");
+      });
+
+      document.getElementById("btnAddCrossSchemeCards").addEventListener("click", addCrossSchemeCardsToActive);
+      document.getElementById("btnSwitchCrossScheme").addEventListener("click", () => {
+        if (state.crossSchemeDetected) {
+          setSymbologyScheme(state.crossSchemeDetected.schemeKey, true);
+        }
+      });
+
+      document.getElementById("btnDownloadFilteredCsv").addEventListener("click", () => exportTriageCsv(true));
+      document.getElementById("btnDownloadAllCsv").addEventListener("click", () => exportTriageCsv(false));
+
+      // Info Modal Event Listeners
+      const btnClose = document.getElementById("btnModalClose");
+      const btnOk = document.getElementById("btnModalOk");
+      const modal = document.getElementById("infoModal");
+
+      if (btnClose) btnClose.addEventListener("click", closeTermModal);
+      if (btnOk) btnOk.addEventListener("click", closeTermModal);
+      if (modal) {
+        modal.addEventListener("click", function (e) {
+          if (e.target === this) closeTermModal();
+        });
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") closeTermModal();
+      });
+
+      // Delegated click listener for all (i) Info buttons
+      document.addEventListener("click", function (e) {
+        const btn = e.target.closest(".info-icon-btn");
+        if (btn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const infoKey = btn.getAttribute("data-info");
+          if (infoKey) openTermModal(infoKey);
+        }
+      });
+    }
+
+    function openTermModal(key) {
+      const def = TERM_DEFINITIONS[key] || {
+        title: key,
+        badgeColor: "#757575",
+        definition: "Operational information for " + key,
+        whyItHappens: "Recorded from incident map or roster data.",
+        action: "Follow incident standard operating procedures."
+      };
+
+      const titleEl = document.getElementById("modalTitle");
+      const bodyEl = document.getElementById("modalBody");
+      const modal = document.getElementById("infoModal");
+      if (!titleEl || !bodyEl || !modal) return;
+
+      titleEl.innerHTML = `<span class="status-dot" style="background-color: ${def.badgeColor || '#757575'}; width: 12px; height: 12px; border: 1px solid rgba(0,0,0,0.2);"></span> ${escapeHtml(def.title)}`;
+
+      bodyEl.innerHTML = `
+        <div class="modal-field">
+          <div class="modal-field-title">Definition</div>
+          <div>${escapeHtml(def.definition)}</div>
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-title">Why this happens</div>
+          <div>${escapeHtml(def.whyItHappens)}</div>
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-title">Operational Action Required</div>
+          <div style="font-weight: 600; color: var(--accent);">${escapeHtml(def.action)}</div>
+        </div>
+      `;
+      modal.style.display = "flex";
+    }
+
+    function closeTermModal() {
+      const modal = document.getElementById("infoModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function handleGeoFile(file) {
+      if (!file) return;
+      state.geoFilename = file.name;
+      const reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById("geoTextInput").value = reader.result;
+        processGeoJsonText(reader.result, true);
+      };
+      reader.readAsText(file);
+    }
+
+    function processGeoJsonText(text, persist = true) {
+      state.geoJsonRawText = text;
+      let geoData;
+      try {
+        geoData = JSON.parse(text);
+      } catch (err) {
+        showMessage("msgStep2", `Invalid JSON syntax: ${err.message}`, "err");
+        return;
+      }
+
+      if (!geoData.features || !Array.isArray(geoData.features)) {
+        showMessage("msgStep2", "Invalid GeoJSON: Expected a FeatureCollection with a features array.", "err");
+        return;
+      }
+
+      reconcileMasterWithGeoJson(geoData);
+      showMessage("msgStep2", `Processed CalTopo GeoJSON with ${geoData.features.length} feature(s). Operational review table updated.`, "ok");
+      if (persist) saveSession();
+    }
+
+    function normalizeAddress(str) {
+      if (!str) return "";
+      return String(str)
+        .toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\b(street|st|road|rd|drive|dr|avenue|ave|lane|ln|court|ct|boulevard|blvd|way|circle|cir)\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function reconcileMasterWithGeoJson(geoData) {
+      if (!geoData && state.geoJsonRawText) {
+        try { geoData = JSON.parse(state.geoJsonRawText); } catch (e) { return; }
+      }
+      if (!geoData || !geoData.features) return;
+
+      const caltopoPoints = [];
+      const folderTitles = new Map();
+
+      // 1. Extract folder metadata
+      for (const feat of geoData.features) {
+        if (feat.properties && feat.properties.class === "Folder" && feat.id) {
+          folderTitles.set(feat.id, feat.properties.title || "Folder");
+        }
+      }
+
+      // 2. Extract Point features
+      for (const feat of geoData.features) {
+        if (!feat.geometry || feat.geometry.type !== "Point") continue;
+        const coords = feat.geometry.coordinates;
+        if (!coords || coords.length < 2) continue;
+
+        const lon = coords[0];
+        const lat = coords[1];
+        const props = feat.properties || {};
+        const symbol = props["marker-symbol"] || "point";
+        const title = props.title || props.name || "";
+        const desc = props.description || "";
+        const folderId = props.folderId || "";
+        const folderName = folderTitles.get(folderId) || "";
+
+        caltopoPoints.push({
+          id: feat.id || props.id || "",
+          title: title,
+          lat: lat,
+          lon: lon,
+          symbol: symbol,
+          description: desc,
+          folderName: folderName,
+          matched: false
+        });
+      }
+
+      const reconciled = [];
+      const matchedGeoIndexes = new Set();
+      let crossSchemeCount = 0;
+      const detectedOtherSchemePresets = new Map();
+
+      // Identify which other scheme might be in use
+      const otherSchemeKey = state.activeSchemeKey === "caltopo" ? "bcnb" : "caltopo";
+      const otherSchemePresets = otherSchemeKey === "bcnb" ? SCHEME_BC_NB : SCHEME_CALTOPO_DEFAULT;
+      const otherSchemeName = otherSchemeKey === "bcnb" ? "BC / NB Canada" : "CalTopo Default";
+
+      // Reconcile against master roster (if loaded)
+      if (state.masterRoster.length > 0) {
+        for (const masterItem of state.masterRoster) {
+          const normMaster = normalizeAddress(masterItem.address);
+          let matchedPoint = null;
+          let matchedIdx = -1;
+
+          // Match by normalized address
+          for (let i = 0; i < caltopoPoints.length; i++) {
+            if (matchedGeoIndexes.has(i)) continue;
+            const normCal = normalizeAddress(caltopoPoints[i].title);
+            if (normMaster && normCal && normMaster === normCal) {
+              matchedPoint = caltopoPoints[i];
+              matchedIdx = i;
+              break;
+            }
+          }
+
+          // Fallback: match by ~35m coordinate proximity
+          if (!matchedPoint) {
+            for (let i = 0; i < caltopoPoints.length; i++) {
+              if (matchedGeoIndexes.has(i)) continue;
+              const dLat = Math.abs(caltopoPoints[i].lat - masterItem.lat);
+              const dLon = Math.abs(caltopoPoints[i].lon - masterItem.lon);
+              if (dLat < 0.00035 && dLon < 0.00035) {
+                matchedPoint = caltopoPoints[i];
+                matchedIdx = i;
+                break;
+              }
+            }
+          }
+
+          if (matchedPoint) {
+            matchedGeoIndexes.add(matchedIdx);
+            const statusInfo = resolveSymbolStatus(matchedPoint.symbol, otherSchemePresets);
+            if (statusInfo.isOtherScheme) {
+              crossSchemeCount++;
+              detectedOtherSchemePresets.set(statusInfo.symbol, statusInfo);
+            }
+
+            reconciled.push({
+              isStructure: true,
+              address: masterItem.address || matchedPoint.title,
+              street: masterItem.street || matchedPoint.folderName,
+              lat: matchedPoint.lat,
+              lon: matchedPoint.lon,
+              statusLabel: statusInfo.label,
+              statusCode: statusInfo.code,
+              color: statusInfo.color,
+              symbol: matchedPoint.symbol,
+              reconciliation: "Reconciled (Matched)",
+              source: "caltopo_and_master",
+              featureId: matchedPoint.id
+            });
+          } else {
+            // Unvisited Master structure missing from CalTopo
+            reconciled.push({
+              isStructure: true,
+              address: masterItem.address,
+              street: masterItem.street,
+              lat: masterItem.lat,
+              lon: masterItem.lon,
+              statusLabel: "Unvisited (Missing from Map)",
+              statusCode: "MISSING",
+              color: "#8e24aa",
+              symbol: "—",
+              reconciliation: "⚠️ UNVISITED (Master Only)",
+              source: "master_only",
+              featureId: ""
+            });
+          }
+        }
+
+        // CalTopo points not matched to master roster
+        caltopoPoints.forEach((pt, idx) => {
+          if (!matchedGeoIndexes.has(idx)) {
+            const isKnownStructure = isKnownStructureSymbol(pt.symbol);
+            if (isKnownStructure) {
+              // Field-added residence structure!
+              const statusInfo = resolveSymbolStatus(pt.symbol, otherSchemePresets);
+              if (statusInfo.isOtherScheme) {
+                crossSchemeCount++;
+                detectedOtherSchemePresets.set(statusInfo.symbol, statusInfo);
+              }
+              reconciled.push({
+                isStructure: true,
+                address: pt.title || `Field Structure (${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)})`,
+                street: pt.folderName,
+                lat: pt.lat,
+                lon: pt.lon,
+                statusLabel: statusInfo.label,
+                statusCode: statusInfo.code,
+                color: statusInfo.color,
+                symbol: pt.symbol,
+                reconciliation: "Added in Field (New Structure)",
+                source: "caltopo_field_structure",
+                featureId: pt.id
+              });
+            } else {
+              // Non-roster & non-structure icon -> ICS / Incident Point!
+              reconciled.push({
+                isStructure: false,
+                address: pt.title || `Incident Marker (${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)})`,
+                street: pt.folderName,
+                lat: pt.lat,
+                lon: pt.lon,
+                statusLabel: `ICS Point (${pt.symbol || 'Marker'})`,
+                statusCode: "ICS_POINT",
+                color: "#78909c",
+                symbol: pt.symbol,
+                reconciliation: "ICS / Incident Point",
+                source: "caltopo_ics_point",
+                featureId: pt.id
+              });
+            }
+          }
+        });
+      } else {
+        // Standalone mode: No master CSV loaded
+        for (const pt of caltopoPoints) {
+          const isKnownStructure = isKnownStructureSymbol(pt.symbol);
+          if (isKnownStructure) {
+            const statusInfo = resolveSymbolStatus(pt.symbol, otherSchemePresets);
+            if (statusInfo.isOtherScheme) {
+              crossSchemeCount++;
+              detectedOtherSchemePresets.set(statusInfo.symbol, statusInfo);
+            }
+            reconciled.push({
+              isStructure: true,
+              address: pt.title || `Structure (${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)})`,
+              street: pt.folderName,
+              lat: pt.lat,
+              lon: pt.lon,
+              statusLabel: statusInfo.label,
+              statusCode: statusInfo.code,
+              color: statusInfo.color,
+              symbol: pt.symbol,
+              reconciliation: "CalTopo Structure",
+              source: "caltopo_structure",
+              featureId: pt.id
+            });
+          } else {
+            // ICS / Incident Point
+            reconciled.push({
+              isStructure: false,
+              address: pt.title || `Incident Marker (${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)})`,
+              street: pt.folderName,
+              lat: pt.lat,
+              lon: pt.lon,
+              statusLabel: `ICS Point (${pt.symbol || 'Marker'})`,
+              statusCode: "ICS_POINT",
+              color: "#78909c",
+              symbol: pt.symbol,
+              reconciliation: "ICS / Incident Point",
+              source: "caltopo_ics_point",
+              featureId: pt.id
+            });
+          }
+        }
+      }
+
+      state.reconciledRows = reconciled;
+      state.icsCount = reconciled.filter(r => !r.isStructure).length;
+
+      // Handle Cross-Scheme Detection
+      if (crossSchemeCount > 0) {
+        state.crossSchemeDetected = {
+          schemeKey: otherSchemeKey,
+          schemeName: otherSchemeName,
+          count: crossSchemeCount,
+          presets: Array.from(detectedOtherSchemePresets.values())
+        };
+        showCrossSchemeBanner();
+      } else {
+        state.crossSchemeDetected = null;
+        document.getElementById("crossSchemeBanner").style.display = "none";
+      }
+
+      updateDynamicUI();
+      updateRosterStatusNotice();
+
+      document.getElementById("btnDownloadFilteredCsv").disabled = reconciled.length === 0;
+      document.getElementById("btnDownloadAllCsv").disabled = reconciled.length === 0;
+    }
+
+    function isKnownStructureSymbol(symbol) {
+      if (!symbol) return true;
+      if (ALL_KNOWN_STRUCTURE_SYMBOLS.has(symbol.toLowerCase())) return true;
+      if (state.presets.some(p => p.symbol.toLowerCase() === symbol.toLowerCase())) return true;
+      return false;
+    }
+
+    function resolveSymbolStatus(symbol, otherSchemePresets) {
+      if (!symbol) return { label: "Unchecked / Not Visited", code: "UNCHECKED", color: "#1565c0", isOtherScheme: false };
+
+      // 1. Check in active presets
+      const activeMatch = state.presets.find(p => p.symbol.toLowerCase() === symbol.toLowerCase());
+      if (activeMatch) {
+        return { label: activeMatch.label, code: activeMatch.code, color: activeMatch.color, symbol: symbol, isOtherScheme: false };
+      }
+
+      // 2. Check in other standard scheme
+      const otherMatch = otherSchemePresets.find(p => p.symbol.toLowerCase() === symbol.toLowerCase());
+      if (otherMatch) {
+        return { label: otherMatch.label, code: otherMatch.code, color: otherMatch.color, symbol: symbol, isOtherScheme: true };
+      }
+
+      // 3. Fallback
+      return { label: symbol, code: "UNKNOWN", color: "#757575", symbol: symbol, isOtherScheme: false };
+    }
+
+    function showCrossSchemeBanner() {
+      if (!state.crossSchemeDetected) return;
+      const banner = document.getElementById("crossSchemeBanner");
+      const textEl = document.getElementById("crossSchemeText");
+      textEl.innerHTML = `⚠️ <strong>Cross-Scheme Icons Detected:</strong> Found <strong>${state.crossSchemeDetected.count} structure(s)</strong> using <strong>${state.crossSchemeDetected.schemeName}</strong> symbols.`;
+      banner.style.display = "flex";
+    }
+
+    function addCrossSchemeCardsToActive() {
+      if (!state.crossSchemeDetected || !state.crossSchemeDetected.presets) return;
+      const toAdd = state.crossSchemeDetected.presets;
+      let added = 0;
+      for (const p of toAdd) {
+        if (!state.presets.some(existing => existing.symbol === p.symbol)) {
+          state.presets.push({
+            symbol: p.symbol,
+            label: p.label,
+            color: p.color,
+            code: p.code
+          });
+          added++;
+        }
+      }
+      saveSession();
+      document.getElementById("crossSchemeBanner").style.display = "none";
+      showMessage("msgStep2", `Added ${added} new category card(s) from ${state.crossSchemeDetected.schemeName} to your dashboard.`, "ok");
+      state.crossSchemeDetected = null;
+      updateDynamicUI();
+    }
+
+    /* ==========================================================================
+       DYNAMIC UI (CONTRAST GUARD, CARDS, PILLS, ICS SUMMARY)
+       ========================================================================== */
+    function getLuminance(hex) {
+      if (!hex || typeof hex !== "string" || hex[0] !== "#") return 0.5;
+      let c = hex.substring(1);
+      if (c.length === 3) c = c.split("").map(x => x + x).join("");
+      const num = parseInt(c, 16);
+      if (isNaN(num)) return 0.5;
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    }
+
+    function getContrastSafeBadgeStyles(hexColor, isNight) {
+      const lum = getLuminance(hexColor);
+      let textColor, bgColor, borderColor, dotBorder;
+
+      if (isNight) {
+        if (lum < 0.35) {
+          textColor = "#f0dede";
+          bgColor = "#2c2424";
+          borderColor = "#8a7575";
+          dotBorder = "#ffffff";
+        } else {
+          textColor = lum > 0.85 ? "#ffffff" : hexColor;
+          bgColor = "rgba(" + parseInt(hexColor.slice(1, 3), 16) + "," + parseInt(hexColor.slice(3, 5), 16) + "," + parseInt(hexColor.slice(5, 7), 16) + ",0.2)";
+          borderColor = hexColor;
+          dotBorder = "rgba(255,255,255,0.4)";
+        }
+      } else {
+        if (lum > 0.8) {
+          textColor = "#1a1a1a";
+          bgColor = "#f0ece3";
+          borderColor = "#8d8376";
+          dotBorder = "#5e574d";
+        } else if (lum > 0.6) {
+          textColor = "#3d2d00";
+          bgColor = "#fffde7";
+          borderColor = hexColor;
+          dotBorder = "rgba(0,0,0,0.3)";
+        } else {
+          textColor = hexColor;
+          bgColor = "rgba(" + parseInt(hexColor.slice(1, 3), 16) + "," + parseInt(hexColor.slice(3, 5), 16) + "," + parseInt(hexColor.slice(5, 7), 16) + ",0.12)";
+          borderColor = hexColor;
+          dotBorder = "rgba(0,0,0,0.2)";
+        }
+      }
+      return { textColor, bgColor, borderColor, dotBorder };
+    }
+
+    function updateDynamicUI() {
+      renderDashboardCounters();
+      renderFilterPills();
+      renderTriageTable();
+      renderPresetsList();
+      updateSchemeBadges();
+      updateIcsNotice();
+    }
+
+    function updateSchemeBadges() {
+      const isCaltopo = state.activeSchemeKey === "caltopo";
+      const badgeText = isCaltopo ? "CalTopo Default (8 icons)" : "BC / NB Canada (5 icons)";
+      const badge = document.getElementById("activeSchemeBadge");
+      if (badge) badge.textContent = badgeText;
+
+      const qSelect = document.getElementById("quickSchemeSelect");
+      if (qSelect) qSelect.value = state.activeSchemeKey;
+    }
+
+    function updateIcsNotice() {
+      const notice = document.getElementById("icsPointsNotice");
+      const text = document.getElementById("icsPointsText");
+      if (!notice) return;
+
+      if (state.icsCount > 0) {
+        text.innerHTML = `<strong>${state.icsCount} ICS / Incident Point(s)</strong> <button type="button" class="info-icon-btn" data-info="ICS_POINT" title="What is an ICS Point?" aria-label="What is an ICS Point?">i</button>`;
+        notice.style.display = "flex";
+      } else {
+        notice.style.display = "none";
+      }
+    }
+
+    function renderDashboardCounters() {
+      const container = document.getElementById("dashboardCounters");
+      const counts = calculateCounts();
+      const isNight = state.theme === "night";
+
+      let html = "";
+
+      // 1. Total Structures (Residences only)
+      const isTotalActive = state.activeFilter === "ALL";
+      html += `
+        <div class="counter-card ${isTotalActive ? 'active-filter' : ''}" data-filter="ALL" style="border-top-color: var(--accent);">
+          <div class="count-row">
+            <span class="count">${counts.STRUCTURES_TOTAL || 0}</span>
+          </div>
+          <div class="label" title="Total Residence Structures">Total Structures</div>
+        </div>
+      `;
+
+      // 2. Preset category cards (Active scheme + any merged cross-scheme presets)
+      const activeCodes = new Set();
+      for (const preset of state.presets) {
+        activeCodes.add(preset.code);
+        const isActive = state.activeFilter === preset.code;
+        const count = counts[preset.code] || 0;
+        const lum = getLuminance(preset.color);
+        const borderTopColor = (lum > 0.85 && !isNight) ? "#8d8376" : preset.color;
+        const dotBorder = (lum > 0.85 && !isNight) ? "1px solid #5e574d" : "1px solid transparent";
+
+        html += `
+          <div class="counter-card ${isActive ? 'active-filter' : ''}" data-filter="${preset.code}" style="border-top-color: ${borderTopColor};">
+            <div class="count-row">
+              <span class="count">${count}</span>
+              <button type="button" class="info-icon-btn" data-info="${preset.code}" title="Definition of ${escapeHtml(preset.label)}" aria-label="Definition of ${escapeHtml(preset.label)}">i</button>
+            </div>
+            <div class="label" title="${escapeHtml(preset.label)}">
+              <span class="status-dot" style="background-color: ${preset.color}; width: 8px; height: 8px; border: ${dotBorder};"></span>${escapeHtml(preset.label)}
+            </div>
+          </div>
+        `;
+      }
+
+      // If there are structures with codes not currently in state.presets (e.g. cross-scheme not yet added), show them dynamically!
+      for (const [code, count] of Object.entries(counts)) {
+        if (!activeCodes.has(code) && code !== "ALL" && code !== "STRUCTURES_TOTAL" && code !== "MISSING" && code !== "ICS_POINT" && count > 0) {
+          const sampleRow = state.reconciledRows.find(r => r.statusCode === code);
+          const color = sampleRow ? sampleRow.color : "#757575";
+          const label = sampleRow ? sampleRow.statusLabel : code;
+          const isActive = state.activeFilter === code;
+
+          html += `
+            <div class="counter-card ${isActive ? 'active-filter' : ''}" data-filter="${code}" style="border-top-color: ${color};">
+              <div class="count-row">
+                <span class="count">${count}</span>
+                <button type="button" class="info-icon-btn" data-info="${code}" title="Definition of ${escapeHtml(label)}" aria-label="Definition of ${escapeHtml(label)}">i</button>
+              </div>
+              <div class="label" title="${escapeHtml(label)}">
+                <span class="status-dot" style="background-color: ${color}; width: 8px; height: 8px;"></span>${escapeHtml(label)}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // 3. Missing / Diff card (Master structures unvisited in CalTopo)
+      if (state.masterRoster.length > 0 || counts.MISSING > 0) {
+        const isMissingActive = state.activeFilter === "MISSING";
+        html += `
+          <div class="counter-card ${isMissingActive ? 'active-filter' : ''}" data-filter="MISSING" style="border-top-color: #8e24aa;">
+            <div class="count-row">
+              <span class="count">${counts.MISSING || 0}</span>
+              <button type="button" class="info-icon-btn" data-info="MISSING" title="What is Missing / Diff?" aria-label="What is Missing / Diff?">i</button>
+            </div>
+            <div class="label" title="Unvisited Master Structures (Missing from CalTopo)">
+              <span class="status-dot" style="background-color: #8e24aa; width: 8px; height: 8px;"></span>Missing / Diff
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+
+      container.querySelectorAll(".counter-card").forEach(card => {
+        card.addEventListener("click", function (e) {
+          if (e.target.closest(".info-icon-btn")) return;
+          setActiveFilter(this.getAttribute("data-filter"));
+        });
+      });
+    }
+
+    function renderFilterPills() {
+      const container = document.getElementById("filterPillsContainer");
+      const counts = calculateCounts();
+      const isNight = state.theme === "night";
+
+      let html = "";
+      const isAllActive = state.activeFilter === "ALL";
+      html += `
+        <button class="filter-pill ${isAllActive ? 'active' : ''}" data-filter="ALL">
+          All Structures (${counts.STRUCTURES_TOTAL || 0})
+        </button>
+      `;
+
+      const renderedCodes = new Set();
+      for (const preset of state.presets) {
+        renderedCodes.add(preset.code);
+        const isActive = state.activeFilter === preset.code;
+        const count = counts[preset.code] || 0;
+        const lum = getLuminance(preset.color);
+        const dotBorder = (lum > 0.85 && !isNight) ? "1px solid #5e574d" : "1px solid rgba(0,0,0,0.2)";
+
+        html += `
+          <button class="filter-pill ${isActive ? 'active' : ''}" data-filter="${preset.code}">
+            <span class="status-dot" style="background-color: ${preset.color}; border: ${dotBorder};"></span>
+            ${escapeHtml(preset.label)} (${count})
+          </button>
+        `;
+      }
+
+      // Unmatched / extra codes
+      for (const [code, count] of Object.entries(counts)) {
+        if (!renderedCodes.has(code) && code !== "ALL" && code !== "STRUCTURES_TOTAL" && code !== "MISSING" && code !== "ICS_POINT" && count > 0) {
+          const sampleRow = state.reconciledRows.find(r => r.statusCode === code);
+          const color = sampleRow ? sampleRow.color : "#757575";
+          const label = sampleRow ? sampleRow.statusLabel : code;
+          const isActive = state.activeFilter === code;
+
+          html += `
+            <button class="filter-pill ${isActive ? 'active' : ''}" data-filter="${code}">
+              <span class="status-dot" style="background-color: ${color};"></span>
+              ${escapeHtml(label)} (${count})
+            </button>
+          `;
+        }
+      }
+
+      // Missing / Diff pill
+      if (state.masterRoster.length > 0 || counts.MISSING > 0) {
+        const isMissingActive = state.activeFilter === "MISSING";
+        html += `
+          <button class="filter-pill ${isMissingActive ? 'active' : ''}" data-filter="MISSING" style="color: #8e24aa;">
+            <span class="status-dot" style="background-color: #8e24aa;"></span>
+            Missing / Diff (${counts.MISSING || 0})
+          </button>
+        `;
+      }
+
+      // ICS Points pill
+      if (state.icsCount > 0) {
+        const isIcsActive = state.activeFilter === "ICS_POINT";
+        html += `
+          <button class="filter-pill ${isIcsActive ? 'active' : ''}" data-filter="ICS_POINT" style="color: #78909c;">
+            <span class="status-dot" style="background-color: #78909c;"></span>
+            📍 ICS Points (${state.icsCount})
+          </button>
+        `;
+      }
+
+      container.innerHTML = html;
+
+      container.querySelectorAll(".filter-pill").forEach(pill => {
+        pill.addEventListener("click", function () {
+          setActiveFilter(this.getAttribute("data-filter"));
+        });
+      });
+    }
+
+    function calculateCounts() {
+      const counts = {
+        ALL: 0,
+        STRUCTURES_TOTAL: 0,
+        MISSING: 0,
+        ICS_POINT: 0
+      };
+
+      for (const p of state.presets) {
+        counts[p.code] = 0;
+      }
+
+      for (const row of state.reconciledRows) {
+        counts.ALL++;
+        if (row.isStructure) {
+          counts.STRUCTURES_TOTAL++;
+          if (counts.hasOwnProperty(row.statusCode)) {
+            counts[row.statusCode]++;
+          } else {
+            counts[row.statusCode] = (counts[row.statusCode] || 0) + 1;
+          }
+        } else {
+          counts.ICS_POINT++;
+        }
+      }
+      return counts;
+    }
+
+    function setActiveFilter(filter) {
+      state.activeFilter = filter;
+      document.querySelectorAll(".counter-card").forEach(c => {
+        c.classList.toggle("active-filter", c.getAttribute("data-filter") === filter);
+      });
+      document.querySelectorAll(".filter-pill").forEach(p => {
+        p.classList.toggle("active", p.getAttribute("data-filter") === filter);
+      });
+      renderTriageTable();
+    }
+
+    function getFilteredRows() {
+      return state.reconciledRows.filter(row => {
+        if (state.activeFilter === "ALL") {
+          // "All" view shows all structures by default; ICS points available via their own filter pill
+          if (!row.isStructure && state.reconciledRows.some(r => r.isStructure)) {
+            return false;
+          }
+        } else if (state.activeFilter === "ICS_POINT") {
+          if (row.isStructure) return false;
+        } else {
+          if (row.statusCode !== state.activeFilter) return false;
+        }
+
+        if (state.searchQuery) {
+          const combined = `${row.address} ${row.street || ""} ${row.statusLabel} ${row.reconciliation} ${row.symbol}`.toLowerCase();
+          if (combined.indexOf(state.searchQuery) === -1) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderTriageTable() {
+      const tbody = document.getElementById("triageTableBody");
+      const filtered = getFilteredRows();
+      const isNight = state.theme === "night";
+
+      document.getElementById("filteredDownloadCount").textContent = filtered.length;
+      document.getElementById("allDownloadCount").textContent = state.reconciledRows.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No structures match active filter or search.</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      for (const row of filtered) {
+        const isMissing = row.statusCode === "MISSING";
+        const isIcs = !row.isStructure;
+        const trStyle = isMissing ? 'style="background: rgba(142, 36, 170, 0.08);"' : (isIcs ? 'style="opacity: 0.85;"' : "");
+
+        const color = row.color || "#757575";
+        const badgeStyle = getContrastSafeBadgeStyles(color, isNight);
+
+        let reconKey = "RECONCILIATION";
+        if (isMissing) reconKey = "MISSING";
+        else if (isIcs) reconKey = "ICS_POINT";
+        else if (row.source === "caltopo_field_structure") reconKey = "FIELD_ADDED";
+
+        html += `
+          <tr ${trStyle}>
+            <td>
+              <span class="status-badge" style="background-color: ${badgeStyle.bgColor}; color: ${badgeStyle.textColor}; border: 1px solid ${badgeStyle.borderColor};">
+                <span class="status-dot" style="background-color: ${color}; border: 1px solid ${badgeStyle.dotBorder};"></span>
+                ${escapeHtml(row.statusLabel)}
+              </span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.address)}</strong>
+              ${row.street ? `<div style="font-size: 0.78rem; color: var(--text-muted);">Folder: ${escapeHtml(row.street)}</div>` : ""}
+            </td>
+            <td><code>${row.lat.toFixed(5)}, ${row.lon.toFixed(5)}</code></td>
+            <td><code>${escapeHtml(row.symbol)}</code></td>
+            <td>
+              <span style="font-size: 0.8rem; font-weight: ${isMissing ? '700; color: #8e24aa;' : (isIcs ? 'normal; color: #78909c;' : 'normal;')}">
+                ${escapeHtml(row.reconciliation)}
+                <button type="button" class="info-icon-btn" data-info="${reconKey}" title="Definition of ${escapeHtml(row.reconciliation)}" aria-label="Definition">i</button>
+              </span>
+            </td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = html;
+    }
+
+    function updateRosterStatusNotice() {
+      const el = document.getElementById("rosterCountStatus");
+      if (state.masterRoster.length > 0) {
+        el.innerHTML = `<strong>Active (${state.masterRoster.length} structures loaded from Step 1)</strong>. Two-way reconciliation diff active.`;
+        el.style.color = "var(--primary-btn)";
+      } else {
+        el.textContent = "No master CSV loaded yet. Go to Step 1 to load your master address list for automatic reconciliation diff.";
+        el.style.color = "var(--text-muted)";
+      }
+    }
+
+    function exportTriageCsv(onlyFiltered) {
+      const rowsToExport = onlyFiltered ? getFilteredRows() : state.reconciledRows;
+      if (rowsToExport.length === 0) {
+        alert("No rows available to export.");
+        return;
+      }
+
+      const headers = ["address", "street_or_folder", "latitude", "longitude", "status", "status_code", "is_residence_structure", "marker_symbol", "reconciliation_status", "feature_id"];
+      const lines = [headers.join(",")];
+
+      for (const row of rowsToExport) {
+        const cells = [
+          row.address,
+          row.street || "",
+          row.lat,
+          row.lon,
+          row.statusLabel,
+          row.statusCode,
+          row.isStructure ? "YES" : "NO",
+          row.symbol,
+          row.reconciliation,
+          row.featureId || ""
+        ].map(escapeCsvCell);
+        lines.push(cells.join(","));
+      }
+
+      const csvContent = lines.join("\n") + "\n";
+      const filename = onlyFiltered ? "sar_evac_triage_filtered.csv" : "sar_evac_triage_all.csv";
+      downloadFile(filename, csvContent, "text/csv");
+    }
+
+    /* ==========================================================================
+       SYMBOLOGY SCHEMES & PRESETS (PROP-02)
+       ========================================================================== */
+    function initPresetEvents() {
+      document.getElementById("btnSelectSchemeCaltopo").addEventListener("click", () => setSymbologyScheme("caltopo", true));
+      document.getElementById("btnSelectSchemeBcnb").addEventListener("click", () => setSymbologyScheme("bcnb", true));
+      document.getElementById("quickSchemeSelect").addEventListener("change", function () {
+        setSymbologyScheme(this.value, true);
+      });
+
+      document.getElementById("btnExportPresets").addEventListener("click", exportAgencyPresets);
+      document.getElementById("btnResetPresets").addEventListener("click", () => setSymbologyScheme(state.activeSchemeKey, true));
+
+      document.getElementById("presetFileInput").addEventListener("change", function (e) {
+        if (e.target.files && e.target.files[0]) importAgencyPresets(e.target.files[0]);
+      });
+    }
+
+    function setSymbologyScheme(schemeKey, alertUser = false) {
+      state.activeSchemeKey = schemeKey;
+      if (schemeKey === "caltopo") {
+        state.presets = JSON.parse(JSON.stringify(SCHEME_CALTOPO_DEFAULT));
+      } else if (schemeKey === "bcnb") {
+        state.presets = JSON.parse(JSON.stringify(SCHEME_BC_NB));
+      }
+      state.activeFilter = "ALL";
+      saveSession();
+
+      if (state.geoJsonRawText) reconcileMasterWithGeoJson();
+      updateDynamicUI();
+
+      if (alertUser) {
+        const name = schemeKey === "caltopo" ? "CalTopo Default" : "BC / NB Canada";
+        showMessage("msgStep2", `Symbology scheme switched to "${name}". Categories and colors updated.`, "ok");
+      }
+    }
+
+    function renderPresetsList() {
+      const container = document.getElementById("presetsList");
+      let html = "";
+      state.presets.forEach((p, idx) => {
+        html += `
+          <div class="preset-row">
+            <span class="preset-color-badge" style="background-color: ${p.color};"></span>
+            <input type="text" value="${escapeHtml(p.label)}" style="width: 15rem; margin-bottom: 0;" onchange="updatePreset(${idx}, 'label', this.value)">
+            <input type="text" value="${escapeHtml(p.symbol)}" style="width: 13rem; margin-bottom: 0;" title="CalTopo symbol name" onchange="updatePreset(${idx}, 'symbol', this.value)">
+            <input type="color" value="${p.color}" style="width: 3.2rem; height: 2.1rem; padding: 0.1rem; margin-bottom: 0;" onchange="updatePreset(${idx}, 'color', this.value)">
+            <code style="font-size: 0.8rem; color: var(--text-muted);">${p.code}</code>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.updatePreset = function (idx, field, value) {
+      if (state.presets[idx]) {
+        state.presets[idx][field] = value;
+        state.activeSchemeKey = "custom";
+        saveSession();
+        if (state.geoJsonRawText) reconcileMasterWithGeoJson();
+        updateDynamicUI();
+      }
+    };
+
+    function exportAgencyPresets() {
+      const json = JSON.stringify(state.presets, null, 2);
+      downloadFile("sar_evac_presets.json", json, "application/json");
+    }
+
+    function importAgencyPresets(file) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        try {
+          const imported = JSON.parse(reader.result);
+          if (Array.isArray(imported) && imported.length > 0 && imported[0].symbol) {
+            state.presets = imported;
+            state.activeSchemeKey = "custom";
+            saveSession();
+            if (state.geoJsonRawText) reconcileMasterWithGeoJson();
+            updateDynamicUI();
+            alert("Agency presets imported successfully!");
+          } else {
+            alert("Invalid preset file format. Expected a JSON array of preset objects.");
+          }
+        } catch (err) {
+          alert(`Error reading preset JSON: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ==========================================================================
+       UTILITIES & DATA HELPERS
+       ========================================================================== */
+    function showMessage(elementId, text, type) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.className = `message ${type}`;
+      el.textContent = text;
+    }
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = filename;
       link.click();
@@ -163,44 +3191,48 @@ icon-R4CFVU3D-24-0.5-0.5-ff=Cleared"></textarea>
     }
 
     function escapeXml(text) {
-      return String(text)
+      return String(text == null ? "" : text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+    }
+
+    function escapeHtml(text) {
+      return String(text == null ? "" : text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
     }
 
-    function escapeCsvCell(value) {
-      var text = value == null ? "" : String(value);
+    function escapeCsvCell(val) {
+      const text = val == null ? "" : String(val);
       if (text.indexOf('"') >= 0 || text.indexOf(",") >= 0 || text.indexOf("\n") >= 0) {
         return '"' + text.replace(/"/g, '""') + '"';
       }
       return text;
     }
 
-    // Parse CSV text into { headers: [], rows: [[]] }
     function parseCsv(text) {
-      var lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-      var rows = [];
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (line.trim() === "") {
-          continue;
-        }
+      const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+      const rows = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.trim() === "") continue;
         rows.push(parseCsvLine(line));
       }
-      if (rows.length === 0) {
-        return { headers: [], rows: [] };
-      }
+      if (rows.length === 0) return { headers: [], rows: [] };
       return { headers: rows[0], rows: rows.slice(1) };
     }
 
     function parseCsvLine(line) {
-      var cells = [];
-      var current = "";
-      var inQuotes = false;
-      for (var i = 0; i < line.length; i++) {
-        var ch = line[i];
+      const cells = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
         if (inQuotes) {
           if (ch === '"') {
             if (line[i + 1] === '"') {
@@ -226,261 +3258,31 @@ icon-R4CFVU3D-24-0.5-0.5-ff=Cleared"></textarea>
     }
 
     function guessColumn(headers, candidates) {
-      var lowerHeaders = headers.map(function (h) { return h.toLowerCase(); });
-      for (var c = 0; c < candidates.length; c++) {
-        var idx = lowerHeaders.indexOf(candidates[c].toLowerCase());
-        if (idx >= 0) {
-          return headers[idx];
-        }
+      const lower = headers.map(h => h.toLowerCase());
+      for (const cand of candidates) {
+        const idx = lower.indexOf(cand.toLowerCase());
+        if (idx >= 0) return headers[idx];
       }
       return "";
     }
 
-    function fillSelect(selectId, headers, selectedValue) {
-      var select = document.getElementById(selectId);
+    function fillSelect(selectId, headers, selectedValue, emptyLabel = "— select column —") {
+      const select = document.getElementById(selectId);
       select.innerHTML = "";
-      var empty = document.createElement("option");
+      const empty = document.createElement("option");
       empty.value = "";
-      empty.textContent = "(none)";
+      empty.textContent = emptyLabel;
       select.appendChild(empty);
-      for (var i = 0; i < headers.length; i++) {
-        var opt = document.createElement("option");
-        opt.value = headers[i];
-        opt.textContent = headers[i];
-        if (headers[i] === selectedValue) {
-          opt.selected = true;
-        }
+
+      for (const h of headers) {
+        const opt = document.createElement("option");
+        opt.value = h;
+        opt.textContent = h;
+        if (h === selectedValue) opt.selected = true;
         select.appendChild(opt);
       }
     }
-
-    // --- Step 1: CSV → GPX ---
-
-    var lastGpx = "";
-
-    function loadCsvIntoUi(text) {
-      var parsed = parseCsv(text);
-      if (parsed.headers.length === 0) {
-        showMessage("msgStep1", "No headers found in CSV.", true);
-        return;
-      }
-      var latGuess = guessColumn(parsed.headers, ["lat", "latitude", "y"]);
-      var lonGuess = guessColumn(parsed.headers, ["lon", "lng", "long", "longitude", "x"]);
-      var addrGuess = guessColumn(parsed.headers, [
-        "address", "street", "street_address", "street address",
-        "location", "name", "title", "site"
-      ]);
-      fillSelect("colLat", parsed.headers, latGuess);
-      fillSelect("colLon", parsed.headers, lonGuess);
-      fillSelect("colAddress", parsed.headers, addrGuess);
-      showMessage("msgStep1", "Loaded " + parsed.rows.length + " data row(s). Check column mapping, then Build GPX.", false);
-    }
-
-    function buildGpxFromCsv() {
-      var text = document.getElementById("csvInput").value;
-      if (!text.trim()) {
-        showMessage("msgStep1", "Paste or upload a CSV first.", true);
-        return;
-      }
-      var parsed = parseCsv(text);
-      var colLat = document.getElementById("colLat").value;
-      var colLon = document.getElementById("colLon").value;
-      var colAddress = document.getElementById("colAddress").value;
-
-      if (!colLat || !colLon) {
-        showMessage("msgStep1", "Select both latitude and longitude columns.", true);
-        return;
-      }
-
-      var latIndex = parsed.headers.indexOf(colLat);
-      var lonIndex = parsed.headers.indexOf(colLon);
-      var addrIndex = colAddress ? parsed.headers.indexOf(colAddress) : -1;
-
-      var waypoints = [];
-      var skipped = 0;
-
-      for (var r = 0; r < parsed.rows.length; r++) {
-        var row = parsed.rows[r];
-        var lat = parseFloat(row[latIndex]);
-        var lon = parseFloat(row[lonIndex]);
-        if (isNaN(lat) || isNaN(lon)) {
-          skipped++;
-          continue;
-        }
-        var name = addrIndex >= 0 ? (row[addrIndex] || "") : ("Structure " + (r + 1));
-        waypoints.push({ lat: lat, lon: lon, name: name });
-      }
-
-      var gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
-      gpx += '<gpx version="1.1" creator="SAR Evac Bridge" xmlns="http://www.topografix.com/GPX/1/1">\n';
-      for (var w = 0; w < waypoints.length; w++) {
-        var pt = waypoints[w];
-        gpx += '  <wpt lat="' + pt.lat + '" lon="' + pt.lon + '">\n';
-        gpx += "    <name>" + escapeXml(pt.name) + "</name>\n";
-        gpx += "  </wpt>\n";
-      }
-      gpx += "</gpx>\n";
-
-      lastGpx = gpx;
-      document.getElementById("gpxPreview").hidden = false;
-      document.getElementById("gpxPreview").textContent = gpx.slice(0, 2000) + (gpx.length > 2000 ? "\n…" : "");
-      document.getElementById("btnDownloadGpx").disabled = false;
-
-      var msg = "GPX ready: " + waypoints.length + " waypoint(s).";
-      if (skipped > 0) {
-        msg += " Skipped " + skipped + " row(s) with missing coordinates.";
-      }
-      showMessage("msgStep1", msg, false);
-    }
-
-    document.getElementById("csvFile").addEventListener("change", function (event) {
-      var file = event.target.files[0];
-      if (!file) {
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function () {
-        document.getElementById("csvInput").value = reader.result;
-        loadCsvIntoUi(reader.result);
-      };
-      reader.readAsText(file);
-    });
-
-    document.getElementById("csvInput").addEventListener("blur", function () {
-      if (document.getElementById("csvInput").value.trim()) {
-        loadCsvIntoUi(document.getElementById("csvInput").value);
-      }
-    });
-
-    document.getElementById("btnCsvToGpx").addEventListener("click", buildGpxFromCsv);
-    document.getElementById("btnDownloadGpx").addEventListener("click", function () {
-      if (lastGpx) {
-        downloadText("residences.gpx", lastGpx, "application/gpx+xml");
-      }
-    });
-
-    // --- Step 2: GeoJSON → CSV ---
-
-    var lastStatusCsv = "";
-
-    function parseIconMap(text) {
-      var map = {};
-      var lines = text.split("\n");
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (line === "" || line.indexOf("=") < 0) {
-          continue;
-        }
-        var parts = line.split("=");
-        var key = parts[0].trim();
-        var value = parts.slice(1).join("=").trim();
-        if (key) {
-          map[key] = value;
-        }
-      }
-      return map;
-    }
-
-    function statusFromSymbol(symbol, iconMap) {
-      if (!symbol) {
-        return "";
-      }
-      if (iconMap[symbol]) {
-        return iconMap[symbol];
-      }
-      return symbol;
-    }
-
-    function buildCsvFromGeoJson() {
-      var text = document.getElementById("geoInput").value;
-      if (!text.trim()) {
-        showMessage("msgStep2", "Paste or upload GeoJSON first.", true);
-        return;
-      }
-
-      var geo;
-      try {
-        geo = JSON.parse(text);
-      } catch (err) {
-        showMessage("msgStep2", "Invalid JSON: " + err.message, true);
-        return;
-      }
-
-      if (!geo.features || !Array.isArray(geo.features)) {
-        showMessage("msgStep2", "Expected a FeatureCollection with a features array.", true);
-        return;
-      }
-
-      var iconMap = parseIconMap(document.getElementById("iconMap").value);
-      var headers = ["address", "latitude", "longitude", "status", "marker_symbol", "feature_id"];
-      var rows = [];
-      var skipped = 0;
-
-      for (var f = 0; f < geo.features.length; f++) {
-        var feature = geo.features[f];
-        if (!feature.geometry || feature.geometry.type !== "Point") {
-          skipped++;
-          continue;
-        }
-        var coords = feature.geometry.coordinates;
-        if (!coords || coords.length < 2) {
-          skipped++;
-          continue;
-        }
-        var lon = coords[0];
-        var lat = coords[1];
-        var props = feature.properties || {};
-        var symbol = props["marker-symbol"] || "";
-        var address = props.title || props.name || "";
-        var status = statusFromSymbol(symbol, iconMap);
-
-        rows.push([
-          address,
-          lat,
-          lon,
-          status,
-          symbol,
-          feature.id || ""
-        ]);
-      }
-
-      var csvLines = [headers.join(",")];
-      for (var r = 0; r < rows.length; r++) {
-        var cells = rows[r].map(escapeCsvCell);
-        csvLines.push(cells.join(","));
-      }
-      lastStatusCsv = csvLines.join("\n") + "\n";
-
-      document.getElementById("csvPreview").hidden = false;
-      document.getElementById("csvPreview").textContent = lastStatusCsv.slice(0, 2000) + (lastStatusCsv.length > 2000 ? "\n…" : "");
-      document.getElementById("btnDownloadCsv").disabled = false;
-
-      var msg = "CSV ready: " + rows.length + " structure(s).";
-      if (skipped > 0) {
-        msg += " Skipped " + skipped + " non-point feature(s).";
-      }
-      showMessage("msgStep2", msg, false);
-    }
-
-    document.getElementById("geoFile").addEventListener("change", function (event) {
-      var file = event.target.files[0];
-      if (!file) {
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function () {
-        document.getElementById("geoInput").value = reader.result;
-      };
-      reader.readAsText(file);
-    });
-
-    document.getElementById("btnGeoToCsv").addEventListener("click", buildCsvFromGeoJson);
-    document.getElementById("btnDownloadCsv").addEventListener("click", function () {
-      if (lastStatusCsv) {
-        downloadText("structure-status.csv", lastStatusCsv, "text/csv");
-      }
-    });
   </script>
-
 </body>
+
 </html>
