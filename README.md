@@ -2,8 +2,8 @@
 
 Browser-based tools for SAR evacuation workflows with [CalTopo](https://caltopo.com/):
 
-1. **Residences CSV → GPX** — import structure locations into CalTopo as waypoints
-2. **CalTopo GeoJSON → status CSV** — export marker statuses back to a spreadsheet
+1. **Residences CSV → CalTopo GeoJSON / GPX** — import structure locations into CalTopo as waypoints, with optional grouping by street name.
+2. **CalTopo GeoJSON → Triage Dashboard & Status CSV** — track field evacuation statuses, calculate operational metrics, and reconcile unvisited structures.
 
 Everything runs in the browser. No server, no uploads — your data stays on your machine.
 
@@ -30,21 +30,8 @@ All processing happens in JavaScript in your browser. Files are read locally and
 
 ## Development
 
-This repo is a single self-contained HTML file (`sar-evac-bridge.html`) plus a GitHub Pages copy at `index.html`.
+This repository contains:
+- `sar-evac-bridge.html` — The complete, self-contained standalone application.
+- `index.html` — A lightweight redirect file routing GitHub Pages visitors directly to `sar-evac-bridge.html`.
 
-### GitHub Pages setup
-
-1. Open [repo Settings → Pages](https://github.com/Bradley-Parker/SAR-Evac-Tools/settings/pages)
-2. Under **Build and deployment** → **Source**, choose **Deploy from a branch**
-3. Branch: **main**, folder: **/ (root)**
-4. Click **Save**
-
-The site is usually live within a minute or two after the first push.
-
-### Making changes
-
-Edit `sar-evac-bridge.html`, then copy it to `index.html` before pushing so the live site stays in sync:
-
-```powershell
-Copy-Item sar-evac-bridge.html index.html
-```
+All functional updates are made directly in `sar-evac-bridge.html`.
